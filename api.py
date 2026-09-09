@@ -1,12 +1,24 @@
 # api.py
+import os
 import requests
 # pyrefly: ignore [missing-import]
 import streamlit as st
 # pyrefly: ignore [missing-import]
 from geopy.geocoders import Nominatim
+from dotenv import load_dotenv
 
-# Optional: Add TomTom Key if available, otherwise it uses OSRM (Free)
-TOMTOM_API_KEY = "L4gkmNxotmMVp8KJ74X05dNffs2E1G55"  
+# Load environment variables from .env
+load_dotenv()
+
+# TomTom Key & OSRM URL from Environment / Streamlit Secrets
+TOMTOM_API_KEY = os.getenv("TOMTOM_API_KEY")
+if not TOMTOM_API_KEY:
+    try:
+        TOMTOM_API_KEY = st.secrets.get("TOMTOM_API_KEY", "")
+    except Exception:
+        TOMTOM_API_KEY = ""
+
+OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "http://router.project-osrm.org")
 
 @st.cache_data(ttl=3600)
 def search_places(search_term: str):
@@ -29,7 +41,7 @@ def get_road_path(coords):
     """
     if len(coords) < 2: return None, 0, 0
     
-    # 1. Try TomTom (High Accuracy)
+    # 1. Try TomTom (High Accuracy with traffic)
     if TOMTOM_API_KEY:
         try:
             loc_string = ":".join([f"{lat},{lon}" for lat, lon in coords])
@@ -52,7 +64,7 @@ def get_road_path(coords):
 
     # 2. Try OSRM (Open Source / Free)
     loc_string = ";".join([f"{lon},{lat}" for lat, lon in coords])
-    url = f"http://router.project-osrm.org/route/v1/driving/{loc_string}?overview=full&geometries=geojson"
+    url = f"{OSRM_BASE_URL}/route/v1/driving/{loc_string}?overview=full&geometries=geojson"
     try:
         r = requests.get(url, timeout=5)
         if r.status_code == 200:

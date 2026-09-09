@@ -1,8 +1,13 @@
 # app.py
+import os
 import requests
 import numpy as np
 from geopy.distance import geodesic
 from sklearn.cluster import KMeans 
+from dotenv import load_dotenv
+
+load_dotenv()
+OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "http://router.project-osrm.org")
 
 # ======================================================
 # 1. GEOMETRY & DATA FETCHING
@@ -19,7 +24,7 @@ def build_matrices(nodes):
     try:
         # OSRM requires Lon,Lat format
         coords_str = ";".join([f"{node['coords'][1]},{node['coords'][0]}" for node in nodes])
-        url = f"http://router.project-osrm.org/table/v1/driving/{coords_str}?annotations=distance,duration"
+        url = f"{OSRM_BASE_URL}/table/v1/driving/{coords_str}?annotations=distance,duration"
         
         response = requests.get(url, timeout=3) 
         if response.status_code == 200:
