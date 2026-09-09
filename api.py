@@ -5,10 +5,12 @@ import requests
 import streamlit as st
 # pyrefly: ignore [missing-import]
 from geopy.geocoders import Nominatim
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # TomTom Key & OSRM URL from Environment / Streamlit Secrets
 TOMTOM_API_KEY = os.getenv("TOMTOM_API_KEY")

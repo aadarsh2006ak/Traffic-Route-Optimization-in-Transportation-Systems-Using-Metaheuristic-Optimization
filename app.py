@@ -5,9 +5,13 @@ import numpy as np
 # pyrefly: ignore [missing-import]
 from geopy.distance import geodesic
 from sklearn.cluster import KMeans 
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "http://router.project-osrm.org")
 
 # ======================================================
