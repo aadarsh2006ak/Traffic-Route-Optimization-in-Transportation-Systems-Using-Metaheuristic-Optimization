@@ -2,6 +2,7 @@
 import os
 import requests
 import numpy as np
+# pyrefly: ignore [missing-import]
 from geopy.distance import geodesic
 from sklearn.cluster import KMeans 
 from dotenv import load_dotenv
