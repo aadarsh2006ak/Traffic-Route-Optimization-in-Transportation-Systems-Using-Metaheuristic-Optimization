@@ -58,10 +58,11 @@ export const useOptimize = () => {
     // 1. Try WebSocket connection for live iteration streaming
     let wsSupported = true;
     try {
-      const wsUrl = `ws://127.0.0.1:8000/ws/optimize`;
+      const wsUrl = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws/optimize';
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
+
         ws.send(JSON.stringify(payload));
       };
 
