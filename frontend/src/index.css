@@ -7,13 +7,16 @@
     background: radial-gradient(circle at top left, #0b1021 0%, #05050a 100%);
     min-height: 100vh;
     font-family: 'Roboto', sans-serif;
+    color: #f3f4f6;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Custom Scrollbars */
+/* Custom Scrollbars for Desktop & Touch */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: rgba(10, 15, 30, 0.7);
@@ -26,10 +29,20 @@
   background: rgba(0, 243, 255, 0.6);
 }
 
+/* Hide scrollbars when needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Glassmorphism Classes */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(0, 243, 255, 0.15);
 }
 
@@ -52,4 +65,3 @@
 .map-tiles-dark {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
-

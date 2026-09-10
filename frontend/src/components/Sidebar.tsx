@@ -15,9 +15,15 @@ import {
   Fuel,
   Activity,
   Layers,
+  X,
 } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
+
   const {
     startLocation,
     setStartLocation,
@@ -132,17 +138,29 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-80 md:w-96 h-screen flex flex-col bg-[#070a18]/95 border-r border-cyber-border overflow-y-auto p-4 space-y-4 font-sans text-xs">
+    <aside className="w-full h-full flex flex-col bg-[#070a18]/95 border-r border-cyan-500/20 overflow-y-auto p-3 sm:p-4 space-y-3.5 font-sans text-xs">
       {/* Brand Header */}
-      <div className="flex items-center gap-3 pb-3 border-b border-cyan-500/20">
-        <img src="https://img.icons8.com/color/96/delivery--v1.png" alt="Logo" className="w-8 h-8" />
-        <div>
-          <h1 className="font-orbitron font-bold text-sm tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-            QUANTUM LOGISTICS
-          </h1>
-          <p className="text-[10px] text-gray-400 font-roboto">Hybrid QPSO Metaheuristic VRP</p>
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-cyan-500/20">
+        <div className="flex items-center gap-2.5">
+          <img src="https://img.icons8.com/color/96/delivery--v1.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8" />
+          <div>
+            <h1 className="font-orbitron font-bold text-xs sm:text-sm tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+              QUANTUM LOGISTICS
+            </h1>
+            <p className="text-[9px] sm:text-[10px] text-gray-400 font-roboto">Hybrid QPSO Metaheuristic VRP</p>
+          </div>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+            title="Close parameters"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
+
 
       {/* 1. Location & Stops Management */}
       <div className="glass-panel p-3 rounded-xl space-y-3">
