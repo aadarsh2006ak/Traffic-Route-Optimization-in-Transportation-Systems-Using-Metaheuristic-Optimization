@@ -4,7 +4,8 @@ services:
   # ==========================================================
   - type: web
     name: quantum-route-backend
-    runtime: python
+    env: python
+    plan: free
     buildCommand: pip install -r backend/requirements.txt
     startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -18,9 +19,9 @@ services:
   # ==========================================================
   # 2. React + Vite Frontend Static Site
   # ==========================================================
-  - type: web
+  - type: static
     name: quantum-route-frontend
-    runtime: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -30,14 +31,6 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: quantum-route-backend
-          property: url
-          transform: "%s/api/v1"
+        value: https://quantum-route-backend.onrender.com/api/v1
       - key: VITE_WS_URL
-        fromService:
-          type: web
-          name: quantum-route-backend
-          property: url
-          transform: "wss://%s/ws/optimize"
+        value: wss://quantum-route-backend.onrender.com/ws/optimize
