@@ -33,10 +33,17 @@ env/
 ENV/
 .venv/
 
-# Environment Variables
+# Environment Variables (Ignored from git for security)
 .env
+.env.*
 .env.local
+*.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*
 !.env.example
+!frontend/.env.example
+
 
 # IDEs and Editors
 .vscode/
