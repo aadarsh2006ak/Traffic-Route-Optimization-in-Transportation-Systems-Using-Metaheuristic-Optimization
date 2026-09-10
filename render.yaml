@@ -1,0 +1,43 @@
+services:
+  # ==========================================================
+  # 1. FastAPI Python Backend Web Service
+  # ==========================================================
+  - type: web
+    name: quantum-route-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: OSRM_BASE_URL
+        value: http://router.project-osrm.org
+
+  # ==========================================================
+  # 2. React + Vite Frontend Static Site
+  # ==========================================================
+  - type: web
+    name: quantum-route-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: quantum-route-backend
+          property: url
+          transform: "%s/api/v1"
+      - key: VITE_WS_URL
+        fromService:
+          type: web
+          name: quantum-route-backend
+          property: url
+          transform: "wss://%s/ws/optimize"
