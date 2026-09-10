@@ -1,0 +1,7 @@
+Algorithm,Distance_km,Duration_min,Runtime_sec,Iterations,Quantum_Tunnels,Gap_Percent,Feasibility
+"QPSO",1842.60,2450.5,1.4200,340,185,"0.00% (Best)","✅ Feasible"
+"Simulated Annealing",1889.10,2510.0,1.8500,1200,140,"+2.52%","✅ Feasible"
+"Ant Colony",1912.00,2540.2,4.1000,190,0,"+3.76%","✅ Feasible"
+"Genetic Algorithm",1934.40,2570.8,2.6500,780,0,"+4.98%","✅ Feasible"
+"Classical PSO",2045.80,2720.0,1.9800,620,0,"+11.02%","✅ Feasible"
+"Exact Solver (N=12)",128.40,165.0,18.9000,12000,0,"0.00% (Best)","✅ Feasible"

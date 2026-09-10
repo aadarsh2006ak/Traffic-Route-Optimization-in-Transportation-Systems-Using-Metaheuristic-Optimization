@@ -1,0 +1,11 @@
+name,lat,lon,demand,start_time,end_time
+"Connaught Place, New Delhi",28.6315,77.2167,0,8.0,18.0
+"India Gate, New Delhi",28.6129,77.2295,2,9.0,12.0
+"Red Fort, Delhi",28.6562,77.2410,1,10.0,14.0
+"Lotus Temple, New Delhi",28.5535,77.2588,3,11.0,15.0
+"Qutub Minar, New Delhi",28.5244,77.1855,2,12.0,16.0
+"Akshardham Temple, Delhi",28.6127,77.2773,1,9.0,13.0
+"Hauz Khas Village, New Delhi",28.5534,77.1945,2,13.0,17.0
+"Cyber Hub, Gurugram",28.4952,77.0886,3,10.0,16.0
+"Noida Sector 18, Noida",28.5708,77.3271,2,11.0,17.0
+"Karol Bagh, New Delhi",28.6517,77.1906,1,9.0,14.0
