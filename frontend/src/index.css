@@ -47,3 +47,9 @@
   color: #bc13fe;
   text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
 }
+
+/* Dark Theme Filter for OpenStreetMap Tiles (Zero API Key & Zero Watermark) */
+.map-tiles-dark {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+

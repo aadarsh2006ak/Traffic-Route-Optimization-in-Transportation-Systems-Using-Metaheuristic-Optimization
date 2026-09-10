@@ -1,5 +1,7 @@
 # backend/app/main.py
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 from .api import optimize_router, benchmark_router, graph_router, ws_router
 

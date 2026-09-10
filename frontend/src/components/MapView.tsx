@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppStore } from '../store/appStore';
-import { Navigation, Download, Layers, ShieldCheck } from 'lucide-react';
+import { Navigation, Download, Layers } from 'lucide-react';
 
 // Custom SVG Icons for Leaflet
 const createIcon = (color: string, label: string, isDepot = false) => {
@@ -117,7 +117,7 @@ export const MapView: React.FC = () => {
         </button>
       )}
 
-      {/* Leaflet Map */}
+      {/* Leaflet Map with Clean Dark OpenStreetMap Tiles */}
       <MapContainer
         center={center}
         zoom={11}
@@ -126,8 +126,9 @@ export const MapView: React.FC = () => {
         style={{ background: '#050711' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className="map-tiles-dark"
         />
 
         {optimizedResult && <BoundsFitter coords={optimizedResult.routes.coords} />}
