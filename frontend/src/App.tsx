@@ -4,10 +4,10 @@ import { Sidebar } from './components/Sidebar';
 import { RouteOptimizer } from './pages/RouteOptimizer';
 import { BenchmarkLab } from './pages/BenchmarkLab';
 import { NetworkGraph } from './pages/NetworkGraph';
-import { Map, Award, Network, Cpu, Menu, X, SlidersHorizontal } from 'lucide-react';
+import { Map, Award, Network, Cpu, SlidersHorizontal } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const { activeTab, setActiveTab, algorithm } = useAppStore();
+  const { activeTab, setActiveTab, algorithm, stops } = useAppStore();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
@@ -27,14 +27,14 @@ export const App: React.FC = () => {
           />
 
           {/* Drawer Content */}
-          <div className="relative z-10 w-[85vw] max-w-sm sm:max-w-md h-full bg-[#070a18] shadow-2xl animate-in slide-in-from-left duration-300">
+          <div className="relative z-10 w-[88vw] max-w-sm sm:max-w-md h-full bg-[#070a18] shadow-2xl animate-in slide-in-from-left duration-300">
             <Sidebar onClose={() => setIsMobileSidebarOpen(false)} />
           </div>
         </div>
       )}
 
       {/* 3. Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 md:p-6 space-y-3 sm:space-y-4 relative">
         {/* Top App Header & Navigation Bar */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-gray-800/80">
           <div className="flex items-center justify-between gap-2">
@@ -100,11 +100,20 @@ export const App: React.FC = () => {
         </header>
 
         {/* Dynamic Page Views */}
-        <div className="flex-1 pb-6 min-h-0">
+        <div className="flex-1 pb-16 sm:pb-6 min-h-0">
           {activeTab === 'optimizer' && <RouteOptimizer />}
           {activeTab === 'benchmark' && <BenchmarkLab />}
           {activeTab === 'graph' && <NetworkGraph />}
         </div>
+
+        {/* Mobile Floating Action Button to configure stops & params */}
+        <button
+          onClick={() => setIsMobileSidebarOpen(true)}
+          className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-600 text-black font-orbitron font-bold text-xs shadow-xl shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>Fleet & Stops ({stops.length})</span>
+        </button>
       </main>
     </div>
   );
