@@ -55,9 +55,12 @@ frontend/node_modules/
 dist/
 frontend/dist/
 .vite/
-*.log
+# Presentation Notes (Local only)
+COLLEGE_PRESENTATION_NOTES.txt
+*PRESENTATION*.txt
 
 # Allow demo datasets and results
+
 !demo_stops.csv
 !demo_stops_40.csv
 !data/
