@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
-from .api import optimize_router, benchmark_router, graph_router, ws_router
+from .api import optimize_router, benchmark_router, graph_router, ws_router, hazard_router
 
 app = FastAPI(
     title="Quantum Route Optimizer API",
@@ -27,6 +27,8 @@ app.include_router(optimize_router)
 app.include_router(benchmark_router)
 app.include_router(graph_router)
 app.include_router(ws_router)
+app.include_router(hazard_router)
+
 
 @app.get("/")
 def root():

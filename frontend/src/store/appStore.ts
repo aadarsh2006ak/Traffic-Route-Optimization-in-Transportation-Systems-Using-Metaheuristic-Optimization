@@ -58,10 +58,25 @@ export interface BenchmarkSummaryItem {
   Feasible: string;
 }
 
+export interface HazardItem {
+  hazard_id: string;
+  title: string;
+  hazard_type: 'ACCIDENT' | 'POTHOLE_CLUSTER' | 'WATERLOGGING' | 'CONSTRUCTION' | string;
+  location: [number, number];
+  severity: number;
+  radius_km: number;
+  is_blocked: boolean;
+  description: string;
+  created_at: string;
+  confidence: number;
+  bbox?: [number, number, number, number];
+  camera_id?: string;
+}
+
 export interface AppState {
   // Navigation
-  activeTab: 'optimizer' | 'benchmark' | 'graph';
-  setActiveTab: (tab: 'optimizer' | 'benchmark' | 'graph') => void;
+  activeTab: 'optimizer' | 'benchmark' | 'graph' | 'vision';
+  setActiveTab: (tab: 'optimizer' | 'benchmark' | 'graph' | 'vision') => void;
 
   // Stops & Depot
   startLocation: LocationNode | null;
@@ -93,6 +108,17 @@ export interface AppState {
   setTrafficEnabled: (val: boolean) => void;
   trafficHour: number;
   setTrafficHour: (hour: number) => void;
+
+  // Computer Vision & Road Hazards
+  hazardsEnabled: boolean;
+  setHazardsEnabled: (val: boolean) => void;
+  activeHazards: HazardItem[];
+  setHazards: (hazards: HazardItem[]) => void;
+  addHazard: (hazard: HazardItem) => void;
+  removeHazard: (hazardId: string) => void;
+  clearHazards: () => void;
+  activeAlert: HazardItem | null;
+  setActiveAlert: (alert: HazardItem | null) => void;
 
   // Hyperparameters
   algorithmParams: Record<string, any>;
@@ -167,6 +193,50 @@ export const useAppStore = create<AppState>((set) => ({
   trafficHour: 9.0,
   setTrafficHour: (hour) => set({ trafficHour: hour }),
 
+  // CV Hazards Initial State
+  hazardsEnabled: true,
+  setHazardsEnabled: (val) => set({ hazardsEnabled: val }),
+  activeHazards: [
+    {
+      hazard_id: 'hz_demo_accident',
+      title: '💥 Major Collision at Connaught Place',
+      hazard_type: 'ACCIDENT',
+      location: [28.625, 77.215],
+      severity: 0.95,
+      radius_km: 0.8,
+      is_blocked: true,
+      description: '2-lane road blockage reported by CCTV Camera #14. High congestion.',
+      created_at: new Date().toISOString(),
+      confidence: 0.94,
+      bbox: [120, 85, 340, 260],
+      camera_id: 'CAM_DEL_CP_04',
+    },
+    {
+      hazard_id: 'hz_demo_pothole',
+      title: '🕳️ Pothole Zone on South Corridor',
+      hazard_type: 'POTHOLE_CLUSTER',
+      location: [28.58, 77.23],
+      severity: 0.55,
+      radius_km: 0.5,
+      is_blocked: false,
+      description: 'Deep asphalt fractures causing vehicle speed drop to <15 km/h.',
+      created_at: new Date().toISOString(),
+      confidence: 0.88,
+      bbox: [210, 160, 180, 110],
+      camera_id: 'CAM_DEL_S_12',
+    },
+  ],
+  setHazards: (hazards) => set({ activeHazards: hazards }),
+  addHazard: (hazard) =>
+    set((state) => ({ activeHazards: [hazard, ...state.activeHazards] })),
+  removeHazard: (hazardId) =>
+    set((state) => ({
+      activeHazards: state.activeHazards.filter((h) => h.hazard_id !== hazardId),
+    })),
+  clearHazards: () => set({ activeHazards: [] }),
+  activeAlert: null,
+  setActiveAlert: (alert) => set({ activeAlert: alert }),
+
   algorithmParams: { swarm_size: 50, beta: 1.2, max_iter: 600 },
   setAlgorithmParams: (params) => set({ algorithmParams: params }),
 
@@ -189,3 +259,4 @@ export const useAppStore = create<AppState>((set) => ({
   isBenchmarking: false,
   setIsBenchmarking: (val) => set({ isBenchmarking: val }),
 }));
+

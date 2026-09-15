@@ -2,7 +2,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional, Tuple
+# pyrefly: ignore [missing-import]
 from ..core.graph_model import transportation_graph
+# pyrefly: ignore [missing-import]
 from ..services.osrm_service import osrm_service
 
 router = APIRouter(prefix="/api/v1/graph", tags=["Network Graph"])

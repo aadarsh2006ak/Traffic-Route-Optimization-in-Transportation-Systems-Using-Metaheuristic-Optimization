@@ -2,8 +2,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, Tuple
+# pyrefly: ignore [missing-import]
 from ..algorithms import ALGORITHM_REGISTRY, qpso_solver
+# pyrefly: ignore [missing-import]
 from ..services.osrm_service import osrm_service
+# pyrefly: ignore [missing-import]
+from ..services.cv_hazard_service import cv_hazard_service
+# pyrefly: ignore [missing-import]
 from ..core.constraints import constraint_handler
 
 router = APIRouter(prefix="/api/v1", tags=["Optimization"])
@@ -24,6 +29,7 @@ class OptimizeRequest(BaseModel):
     round_trip: Optional[bool] = False
     traffic_enabled: Optional[bool] = True
     traffic_hour: Optional[float] = Field(default=9.0, ge=0.0, le=24.0)
+    hazards_enabled: Optional[bool] = True
     mileage_km_per_l: Optional[float] = 12.0
     fuel_price_per_l: Optional[float] = 96.0
     algorithm_params: Optional[Dict[str, Any]] = None
@@ -31,7 +37,8 @@ class OptimizeRequest(BaseModel):
 @router.post("/optimize")
 def optimize_route(request: OptimizeRequest):
     """
-    Optimizes vehicle routes using Quantum-Inspired Metaheuristics (QPSO) or classical metaheuristics.
+    Optimizes vehicle routes using Quantum-Inspired Metaheuristics (QPSO) or classical metaheuristics,
+    fusing OSRM road geometry, live traffic, and Computer Vision (CV) road hazard avoidance.
     """
     if not request.stops:
         raise HTTPException(status_code=400, detail="At least one destination stop is required.")
@@ -40,8 +47,17 @@ def optimize_route(request: OptimizeRequest):
     stops_dict = [s.model_dump() for s in request.stops]
     all_nodes = [start_dict] + stops_dict
 
-    # Build Distance and Time matrices
+    # Build Distance and Time matrices from OSRM
     dist_matrix, time_matrix = osrm_service.build_matrices(all_nodes)
+
+    # Inject CV Road Damage & Accident Penalties into Cost Matrices
+    affected_hazard_edges = []
+    active_hazards = []
+    if request.hazards_enabled:
+        dist_matrix, time_matrix, affected_hazard_edges = cv_hazard_service.apply_hazards_to_matrices(
+            dist_matrix, time_matrix, all_nodes
+        )
+        active_hazards = cv_hazard_service.get_active_hazards()
 
     # Select solver
     algo_name = request.algorithm or "QPSO"
@@ -121,5 +137,12 @@ def optimize_route(request: OptimizeRequest):
             "coords": all_coords,
             "routes_geo": all_routes_geo
         },
+        "hazards": {
+            "enabled": request.hazards_enabled,
+            "active_count": len(active_hazards),
+            "items": active_hazards,
+            "impacted_segments": affected_hazard_edges
+        },
         "optimization_stats": stats
     }
+

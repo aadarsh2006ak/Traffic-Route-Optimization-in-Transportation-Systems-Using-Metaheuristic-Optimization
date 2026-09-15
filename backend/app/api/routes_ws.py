@@ -2,8 +2,11 @@
 import json
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+# pyrefly: ignore [missing-import]
 from ..algorithms import ALGORITHM_REGISTRY, qpso_solver
+# pyrefly: ignore [missing-import]
 from ..services.osrm_service import osrm_service
+# pyrefly: ignore [missing-import]
 from ..core.constraints import constraint_handler
 
 router = APIRouter(tags=["WebSocket Real-Time Streaming"])

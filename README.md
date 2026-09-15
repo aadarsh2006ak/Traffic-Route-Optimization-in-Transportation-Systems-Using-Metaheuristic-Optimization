@@ -10,61 +10,64 @@
 [![WebSocket](https://img.shields.io/badge/WebSocket-Live_Streaming-orange?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
+An enterprise-grade, high-performance logistics and transportation route optimization platform powered by **Quantum-Behaved Particle Swarm Optimization (QPSO)** and classical metaheuristics. Designed for multi-vehicle fleet routing under dynamic peak-hour traffic, hard capacity limits (CVRP), and delivery time windows (CVRPTW).
+
 ---
 
 ## 📖 Table of Contents
-- [🌟 What is this Project?](#-what-is-this-project)
+- [🌟 Overview](#-overview)
 - [✨ Key Features](#-key-features)
-- [🏗️ System Architecture](#️-system-architecture)
-- [⚛️ Metaheuristic Algorithms Implemented](#️-metaheuristic-algorithms-implemented)
-- [📁 Project Directory Structure](#-project-directory-structure)
-- [🚀 Quick Start Guide (How to Run)](#-quick-start-guide-how-to-run)
+- [🏗️ Architecture](#️-architecture)
+- [⚛️ Optimization Algorithms](#️-optimization-algorithms)
+- [📁 Directory Structure](#-directory-structure)
+- [🚀 Quick Start Guide](#-quick-start-guide)
   - [Prerequisites](#prerequisites)
-  - [1. Backend Setup & Launch](#1-backend-setup--launch)
-  - [2. Frontend Setup & Launch](#2-frontend-setup--launch)
+  - [1. Backend Setup](#1-backend-setup)
+  - [2. Frontend Setup](#2-frontend-setup)
 - [🧪 Running Automated Tests](#-running-automated-tests)
-- [📡 API Documentation](#-api-documentation)
-- [📊 Benchmark & Experimental Results](#-benchmark--experimental-results)
+- [📡 API & WebSocket Reference](#-api--websocket-reference)
+- [📊 Benchmark Results](#-benchmark-results)
+- [🛠️ Troubleshooting & FAQs](#️-troubleshooting--faqs)
 - [📜 License](#-license)
 
 ---
 
-## 🌟 What is this Project?
+## 🌟 Overview
 
-Urban logistics, delivery fleets (e.g., Amazon, FedEx, Blinkit), and transportation networks face major challenges:
-1. **Combinatorial Explosion**: Finding the optimal delivery sequence for $N$ locations is an **NP-hard** problem ($O(N!)$ possibilities). For just 20 stops, there are over $2.43 \times 10^{18}$ possible routes!
-2. **Dynamic Traffic Congestion**: Rush-hour traffic drastically changes travel times depending on the time of day.
-3. **Complex Fleet Constraints**: Vehicles have maximum payload capacities (**CVRP**) and customers have strict delivery deadlines (**Time Windows - CVRPTW**).
+Logistics networks, supply chains, and delivery fleets (e.g., e-commerce, express courier, quick-commerce) face computationally intensive challenges:
+1. **Combinatorial Explosion (NP-Hard)**: Finding optimal delivery sequences for $N$ locations scales as $O(N!)$. For just 20 stops, there are over $2.43 \times 10^{18}$ route combinations.
+2. **Dynamic Traffic Congestion**: Travel times vary drastically depending on the time of day and rush-hour bottlenecks.
+3. **Complex Fleet Constraints**: Vehicles have strict payload capacity limits (**Capacitated Vehicle Routing Problem - CVRP**) and customers have tight delivery deadlines (**Time Windows - CVRPTW**).
 
-### 💡 Our Solution
-This project is an **Enterprise-Grade Transportation Optimization Platform** that uses **Quantum-Behaved Particle Swarm Optimization (QPSO)** and classical metaheuristics to compute optimal, multi-vehicle dispatch routes in seconds while accounting for live dynamic traffic and capacity constraints.
-
-It includes:
-- A high-speed **FastAPI Python Backend** with WebSocket support for live particle convergence streaming.
-- A futuristic, responsive **React + Vite + TypeScript Frontend** with interactive dark-mode maps and real-time visualization charts.
+### 💡 The Solution
+This project combines **Quantum Delta-Potential Well Wave Mechanics (QPSO)** with real-time graph modeling:
+- **FastAPI Python Backend**: High-performance optimization engine with asynchronous WebSocket streaming for real-time convergence tracking.
+- **React + TypeScript + Vite Frontend**: Cyberpunk-themed interactive dashboard with dark-mode Leaflet OpenStreetMap visuals, real-time Recharts convergence graphs, and network topology inspectors.
 
 ---
 
 ## ✨ Key Features
 
-| Feature | Description |
+| Feature | Details |
 | :--- | :--- |
-| ⚛️ **Quantum-Behaved PSO** | Exploits quantum delta-potential well wave mechanics to escape local minima traps that stall classical algorithms. |
-| 🚦 **Dynamic Peak-Hour Traffic** | Time-dependent Gaussian congestion multiplier $\theta(t)$ accurately simulates morning/evening rush hours. |
-| 📦 **CVRPTW Constraints** | Enforces hard vehicle payload limits, customer time windows, and penalty-based cost minimization. |
-| 🗺️ **Interactive Dark Map** | Smooth Leaflet-based map with custom vehicle color-coding, interactive popups, and route polylines (**100% Free OpenStreetMap — No API Key required**). |
-| ⚡ **Live WebSocket Streaming** | Watch the optimization algorithm explore solutions iteration-by-iteration in real-time. |
-| 📊 **Multi-Algorithm Benchmark Lab** | Side-by-side comparison of 6 algorithms on distance, optimality gap, runtime, and convergence. |
-| 🕸️ **Network Graph Topology** | NetworkX weighted directed graph ($G = (V, E)$) visualizer to inspect nodes, edges, and congestion. |
-| 📄 **1-Click Manifest Export** | Download a production-ready CSV dispatch manifest with vehicle assignments, stop sequences, and ETAs. |
+| ⚛️ **Quantum-Behaved PSO** | Quantum delta-potential well wave mechanics allow particles to tunnel through local minima and escape stagnation traps. |
+| 🧠 **Road Damage & Accident CV Radar** | Neural vision model (YOLOv8) analyzes CCTV/dashcam feeds for accidents, potholes, and waterlogging with automatic re-routing. |
+| 🚦 **Dynamic Peak-Hour Traffic** | Time-dependent Gaussian congestion multiplier $\theta(t)$ models morning and evening rush-hour delays. |
+| 📦 **CVRPTW Constraints** | Enforces hard vehicle payload limits, customer time-window windows, and distance/energy minimization. |
+| 🗺️ **Interactive Dark-Mode Map** | Smooth Leaflet map with custom vehicle color-coding, animated polylines, pulsing hazard pins, and popups (**100% Free OpenStreetMap**). |
+| ⚡ **Live WebSocket Streaming** | Stream optimization iteration-by-iteration live into charts and map updates. |
+| 📊 **Multi-Algorithm Benchmark Lab** | Side-by-side comparison of 6 algorithms on distance, optimality gap, runtime, and convergence rate. |
+| 🕸️ **Network Topology Graph** | NetworkX directed graph visualizer ($G = (V, E)$) inspecting nodes, edge weights, and live traffic impedance. |
+| 📄 **1-Click Manifest Export** | Export production-ready CSV dispatch manifests with vehicle assignments, stop sequences, and ETAs. |
+
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Modern Frontend (React + Vite + TS)"]
+    subgraph Frontend["Modern Frontend (React + Vite + TypeScript)"]
         UI["Cyberpunk Dashboard UI"]
         Map["Leaflet Interactive Map (OSM)"]
         Charts["Recharts Live Convergence"]
@@ -86,7 +89,7 @@ flowchart TD
         GA["🧬 Genetic Algorithm (OX1 Crossover)"]
         ACO["🐜 Ant Colony Optimization"]
         PSO["🐦 Classical PSO"]
-        Exact["🎯 Branch & Bound / Exact Solver"]
+        Exact["🎯 Exact ILP / PuLP Solver"]
     end
 
     UI --> Zustand
@@ -106,10 +109,10 @@ flowchart TD
 
 ---
 
-## ⚛️ Metaheuristic Algorithms Implemented
+## ⚛️ Optimization Algorithms
 
 ### 1. Quantum-Behaved Particle Swarm Optimization (QPSO)
-In classical PSO, particles have positions and velocities bounded by Newtonian mechanics. In **QPSO**, particles behave like quantum particles trapped in a Delta Potential Well, allowing them to search anywhere in space with a non-zero probability:
+In classical PSO, particle trajectories are governed by deterministic velocity vectors. In **QPSO**, particles are modeled as wavefunctions trapped in an attractive delta potential well:
 - **Mean Best Position ($mBest$)**:
   $$mBest(t) = \frac{1}{M} \sum_{i=1}^{M} P_i(t)$$
 - **Local Attractor ($p_{id}$)**:
@@ -117,148 +120,146 @@ In classical PSO, particles have positions and velocities bounded by Newtonian m
 - **Quantum State Update Equation**:
   $$X_{id}(t+1) = p_{id}(t) \pm \beta(t) \cdot |mBest_d(t) - X_{id}(t)| \cdot \ln\left(\frac{1}{u_{id}(t)}\right), \quad u_{id} \sim \mathcal{U}(0, 1)$$
 
-### 2. Other Benchmark Algorithms
-- **Simulated Annealing with Quantum Tunneling (SA-QT)**: Probabilistic hill-climbing with kinetic tunneling through high-energy barriers.
+### 2. Other Implemented Metaheuristics
+- **Simulated Annealing with Quantum Tunneling (SA-QT)**: Kinetic tunneling probability through high-energy barrier states.
 - **Genetic Algorithm (GA)**: Order Crossover (OX1), Inversion Mutation, and Tournament Selection.
-- **Ant Colony Optimization (ACO)**: Pheromone matrix evaporation and heuristic visibility matrices ($\eta_{ij} = 1/d_{ij}$).
-- **Classical PSO**: Continuous velocity-displacement model.
-- **Exact Solver**: Integer Linear Programming (ILP) formulation with PuLP / Branch-and-Bound for exact baseline verification ($N \le 12$).
+- **Ant Colony Optimization (ACO)**: Pheromone matrix evaporation and heuristic visibility ($\eta_{ij} = 1/d_{ij}$).
+- **Classical PSO**: Continuous velocity-displacement inertia model.
+- **Exact Solver**: Integer Linear Programming (ILP) with PuLP / Branch-and-Bound for exact baseline verification ($N \le 12$).
 
 ---
 
-## 📁 Project Directory Structure
+## 📁 Directory Structure
 
 ```
 quantum-route-optimiser/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                  # FastAPI server entrypoint & CORS middleware
-│   │   ├── api/
-│   │   │   ├── routes_optimize.py   # POST /api/v1/optimize (Direct REST)
-│   │   │   ├── routes_benchmark.py  # POST /api/v1/benchmark (Multi-algorithm)
-│   │   │   ├── routes_graph.py      # GET /api/v1/graph/topology (NetworkX graph)
-│   │   │   └── routes_ws.py         # WS /ws/optimize (Live WebSocket streaming)
-│   │   ├── core/
-│   │   │   ├── graph_model.py       # NetworkX DiGraph creation & distance matrix
-│   │   │   ├── constraints.py       # CVRP vehicle capacity & time-window penalties
-│   │   │   └── traffic_sim.py       # Time-dependent Gaussian traffic multiplier θ(t)
-│   │   ├── algorithms/
-│   │   │   ├── qpso.py              # Quantum Particle Swarm Optimization
-│   │   │   ├── simulated_annealing.py # SA with Quantum Tunneling
-│   │   │   ├── genetic_algorithm.py # GA with OX1 crossover
-│   │   │   ├── ant_colony.py        # Ant Colony Optimization (ACO)
-│   │   │   ├── classical_pso.py     # Classical continuous PSO
-│   │   │   ├── exact_solver.py      # Exact ILP / PuLP solver
-│   │   │   └── shortest_path.py     # Dijkstra & A* pathfinders
-│   │   └── benchmarking/
-│   │       ├── runner.py            # Multi-algorithm benchmark runner
-│   │       └── metrics.py           # Optimality gap & performance calculator
-│   ├── requirements.txt             # Backend Python dependencies
-│   └── tests/                       # Pytest automated test suite
-│       ├── test_qpso.py
-│       ├── test_constraints.py
-│       └── test_benchmarks.py
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── MapView.tsx          # Leaflet OpenStreetMap view with custom vehicle paths
-│   │   │   ├── Sidebar.tsx          # Stop management, dataset loader & controls
-│   │   │   ├── MetricsCards.tsx     # Distance, duration, energy & vehicle KPI cards
-│   │   │   ├── ConvergenceChart.tsx # Real-time Recharts iteration convergence curve
-│   │   │   ├── BenchmarkChart.tsx   # Multi-algorithm comparison bar chart & table
-│   │   │   └── GraphView.tsx        # Network topology node/edge graph inspector
-│   │   ├── store/
-│   │   │   └── appStore.ts          # Zustand state management
-│   │   ├── hooks/
-│   │   │   ├── useOptimize.ts       # Optimization REST & WebSocket hook
-│   │   │   └── useBenchmark.ts      # Benchmark API hook
-│   │   ├── App.tsx                  # Main application component
-│   │   ├── index.css                # Cyberpunk styling & dark map filters
-│   │   └── main.tsx                 # React DOM mount point
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-├── data/
-│   └── demo_graphs/
-│       ├── 10_nodes_city.csv        # 10-node city delivery dataset
-│       ├── 40_nodes_state.csv       # 40-node state-wide distribution dataset
-│       ├── 100_nodes_metro.csv      # 100-node metro logistics dataset
-│       └── 500_nodes_national.csv   # 500-node national transport network
-├── docs/
-│   ├── architecture.md              # In-depth architectural design
-│   ├── mathematical_formulation.md  # Formal mathematical proof & equations
-│   └── benchmark_report.md          # Comprehensive benchmark results
-├── run_backend.py                   # Python backend runner script
-└── README.md                        # Documentation
+├── quantum-route-optimiser-main/
+│   ├── backend/
+│   │   ├── app/
+│   │   │   ├── main.py                  # FastAPI server entrypoint & CORS middleware
+│   │   │   ├── api/
+│   │   │   │   ├── routes_optimize.py   # POST /api/v1/optimize (Direct REST)
+│   │   │   │   ├── routes_benchmark.py  # POST /api/v1/benchmark (Multi-algorithm)
+│   │   │   │   ├── routes_graph.py      # GET /api/v1/graph/topology (NetworkX graph)
+│   │   │   │   └── routes_ws.py         # WS /ws/optimize (Live WebSocket streaming)
+│   │   │   ├── core/
+│   │   │   │   ├── graph_model.py       # NetworkX DiGraph creation & distance matrix
+│   │   │   │   ├── constraints.py       # CVRP vehicle capacity & time-window penalties
+│   │   │   │   └── traffic_sim.py       # Time-dependent Gaussian traffic multiplier θ(t)
+│   │   │   ├── algorithms/
+│   │   │   │   ├── qpso.py              # Quantum Particle Swarm Optimization
+│   │   │   │   ├── simulated_annealing.py # SA with Quantum Tunneling
+│   │   │   │   ├── genetic_algorithm.py # GA with OX1 crossover
+│   │   │   │   ├── ant_colony.py        # Ant Colony Optimization (ACO)
+│   │   │   │   ├── classical_pso.py     # Classical continuous PSO
+│   │   │   │   ├── exact_solver.py      # Exact ILP / PuLP solver
+│   │   │   │   └── shortest_path.py     # Dijkstra & A* pathfinders
+│   │   │   └── benchmarking/
+│   │   │       ├── runner.py            # Multi-algorithm benchmark runner
+│   │   │       └── metrics.py           # Optimality gap & performance calculator
+│   │   ├── requirements.txt             # Backend Python dependencies
+│   │   └── tests/                       # Pytest automated test suite
+│   ├── frontend/
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   ├── MapView.tsx          # Leaflet OpenStreetMap view with vehicle routes
+│   │   │   │   ├── Sidebar.tsx          # Stop management, dataset loader & controls
+│   │   │   │   ├── MetricsCards.tsx     # KPI cards (distance, time, energy, vehicles)
+│   │   │   │   ├── ConvergenceChart.tsx # Real-time Recharts iteration curve
+│   │   │   │   ├── BenchmarkChart.tsx   # Multi-algorithm comparison charts
+│   │   │   │   └── GraphView.tsx        # Network topology node/edge inspector
+│   │   │   ├── store/
+│   │   │   │   └── appStore.ts          # Zustand global state management
+│   │   │   ├── hooks/
+│   │   │   │   ├── useOptimize.ts       # REST & WebSocket optimization hook
+│   │   │   │   └── useBenchmark.ts      # Benchmark execution hook
+│   │   │   ├── App.tsx                  # Main dashboard layout
+│   │   │   ├── index.css                # Cyberpunk theme & custom scrollbars
+│   │   │   └── main.tsx                 # React entry point
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   └── tailwind.config.js
+│   ├── data/
+│   │   └── demo_graphs/
+│   │       ├── 10_nodes_city.csv        # 10-node city delivery dataset
+│   │       ├── 40_nodes_state.csv       # 40-node state-wide distribution dataset
+│   │       ├── 100_nodes_metro.csv      # 100-node metro logistics dataset
+│   │       └── 500_nodes_national.csv   # 500-node national transport network
+│   ├── docs/                            # In-depth architectural & mathematical docs
+│   ├── run_backend.py                   # Python backend runner script
+│   └── requirements.txt                 # Root dependencies
+└── README.md                            # Project documentation
 ```
 
 ---
 
-## 🚀 Quick Start Guide (How to Run)
+## 🚀 Quick Start Guide
 
 ### Prerequisites
-Make sure you have the following installed on your machine:
-- **Python 3.9+** (Check with `python --version`)
-- **Node.js 18+** & **npm** (Check with `node -v` and `npm -v`)
+Make sure you have the following installed:
+- **Python 3.9+** (`python --version`)
+- **Node.js 18+** & **npm** (`node -v` and `npm -v`)
 - **Git**
 
 ---
 
-### 1. Backend Setup & Launch
+### 1. Backend Setup
 
-Open a terminal in the root directory:
+Open a terminal in `quantum-route-optimiser-main`:
 
 ```bash
-# 1. (Optional but recommended) Create and activate virtual environment
-python -m venv venv
-
+# 1. Create and activate a Python virtual environment
 # Windows (PowerShell):
+python -m venv venv
 .\venv\Scripts\Activate.ps1
+
 # Linux / macOS:
+# python3 -m venv venv
 # source venv/bin/activate
 
-# 2. Install backend Python dependencies
-pip install -r backend/requirements.txt
+# 2. Install Python dependencies
+pip install -r requirements.txt
 
-# 3. Start FastAPI Backend Server
+# 3. Start the FastAPI backend server
 python run_backend.py
 ```
 
-> 🟢 **Backend will start running at:** `http://127.0.0.1:8000`  
-> 📖 **Interactive Swagger API Docs:** `http://127.0.0.1:8000/docs`
+> 🟢 **Backend Live at:** `http://127.0.0.1:8000`  
+> 📖 **Interactive Swagger UI:** `http://127.0.0.1:8000/docs`
 
 ---
 
-### 2. Frontend Setup & Launch
+### 2. Frontend Setup
 
-Open a **new terminal window** in the `frontend/` directory:
+Open a **separate terminal window** in `quantum-route-optimiser-main/frontend`:
 
 ```bash
-# 1. Navigate to the frontend folder
+# 1. Navigate to the frontend directory
 cd frontend
 
-# 2. Install frontend dependencies
+# 2. Install Node.js dependencies
 npm install
 
 # 3. Start the Vite React development server
 npm run dev
 ```
 
-> 🌐 **Open your browser and navigate to:** `http://localhost:3000`  
-> The application will automatically connect to the backend running at `http://127.0.0.1:8000`.
+> 🌐 **Open in browser:** `http://localhost:3000`  
+> The dashboard will automatically connect to the backend at `http://127.0.0.1:8000`.
 
 ---
 
 ## 🧪 Running Automated Tests
 
-To run the complete test suite verifying all algorithms, constraints, and benchmarks:
+Run the test suite verifying QPSO convergence, constraint satisfaction, and multi-algorithm benchmarking:
 
 ```bash
+# From quantum-route-optimiser-main directory:
 pytest backend/tests/ -v
 ```
 
-Expected Output:
-```
+Expected output:
+```text
 backend/tests/test_benchmarks.py::test_benchmark_execution PASSED        [ 16%]
 backend/tests/test_benchmarks.py::test_benchmark_metrics PASSED          [ 33%]
 backend/tests/test_constraints.py::test_cvrp_capacity_satisfaction PASSED [ 50%]
@@ -270,14 +271,13 @@ backend/tests/test_qpso.py::test_qpso_valid_permutation PASSED           [100%]
 
 ---
 
-## 📡 API Documentation
+## 📡 API & WebSocket Reference
 
-FastAPI provides an automatic, interactive Swagger UI available at `http://127.0.0.1:8000/docs`.
+FastAPI automatically generates interactive Swagger documentation at `http://127.0.0.1:8000/docs`.
 
 ### Key Endpoints:
 
-#### 1. `POST /api/v1/optimize`
-Runs single algorithm route optimization.
+#### 1. Single Route Optimization (`POST /api/v1/optimize`)
 ```json
 {
   "algorithm": "qpso",
@@ -295,18 +295,18 @@ Runs single algorithm route optimization.
 }
 ```
 
-#### 2. `POST /api/v1/benchmark`
-Runs all 6 algorithms simultaneously and returns comparative benchmarks, runtimes, and optimality gaps.
+#### 2. Multi-Algorithm Benchmark (`POST /api/v1/benchmark`)
+Executes all 6 algorithms concurrently on the selected stop set and returns distance, optimality gap, and runtime rankings.
 
-#### 3. `GET /api/v1/graph/topology`
-Returns NetworkX nodes, edges, distance matrix, and current traffic congestion weights.
+#### 3. Network Topology Graph (`GET /api/v1/graph/topology`)
+Returns NetworkX nodes, edges, distance matrix, and dynamic traffic congestion weights.
 
-#### 4. `WS /ws/optimize`
-WebSocket endpoint for real-time live convergence streaming (sends progress and best cost iteration-by-iteration).
+#### 4. Live Streaming WebSocket (`WS /ws/optimize`)
+Provides real-time streaming updates of iteration progress, best cost, and route state.
 
 ---
 
-## 📊 Benchmark & Experimental Results
+## 📊 Benchmark Results
 
 Evaluated on the standard **40-Node Regional Logistics Distribution Network** under peak-hour traffic conditions ($\theta(t) = 1.7\times$):
 
@@ -319,11 +319,25 @@ Evaluated on the standard **40-Node Regional Logistics Distribution Network** un
 | 🐦 **Classical PSO** | 2,045.8 km | +11.02% | 1.98 s | 620 |
 | 🎯 **Exact Solver ($N \le 12$)** | Optimal | 0.00% | 18.90 s | Exact |
 
-### 📈 Key Insights:
-- **QPSO outperforms Classical PSO by 11.02%** in solution quality due to its quantum delta-potential tunneling mechanism which prevents premature convergence.
-- **Fast Execution**: QPSO converged in just **1.42 seconds** on 40 nodes, making it ideal for real-time dispatch systems.
+---
+
+## 🛠️ Troubleshooting & FAQs
+
+- **PowerShell Execution Policy Error**:
+  If `.\venv\Scripts\Activate.ps1` gives a script execution error, run:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+- **Port 8000 / 3000 Already in Use**:
+  Change port in backend:
+  ```bash
+  uvicorn backend.app.main:app --port 8080 --reload
+  ```
+- **Map Tiles Not Loading**:
+  Ensure an active internet connection for Leaflet to fetch OpenStreetMap tiles (no API keys required).
 
 ---
 
 ## 📜 License
+
 This project is open-source and licensed under the **MIT License**.

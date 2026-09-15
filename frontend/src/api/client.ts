@@ -47,7 +47,7 @@ const apiClient = axios.create({
 
 export const api = {
   // 1. Optimize Route
-  async optimize(data: OptimizeRequest) {
+  async optimize(data: OptimizeRequest & { hazards_enabled?: boolean }) {
     const response = await apiClient.post('/optimize', data);
     return response.data;
   },
@@ -67,7 +67,38 @@ export const api = {
     return response.data;
   },
 
-  // 4. Nominatim Place Search
+  // 4. Computer Vision Hazards Endpoints
+  async getActiveHazards() {
+    const response = await apiClient.get('/hazards/active');
+    return response.data;
+  },
+
+  async detectHazard(data: { image_name: string; lat: number; lng: number; camera_id?: string; hazard_type?: string; severity?: number }) {
+    const response = await apiClient.post('/hazards/detect', data);
+    return response.data;
+  },
+
+  async reportHazard(data: { title: string; hazard_type: string; lat: number; lng: number; severity?: number; radius_km?: number; is_blocked?: boolean; description?: string }) {
+    const response = await apiClient.post('/hazards/report', data);
+    return response.data;
+  },
+
+  async loadHazardPreset(presetName: string) {
+    const response = await apiClient.post(`/hazards/presets/${presetName}`);
+    return response.data;
+  },
+
+  async clearHazards() {
+    const response = await apiClient.post('/hazards/clear');
+    return response.data;
+  },
+
+  async resolveHazard(hazardId: string) {
+    const response = await apiClient.delete(`/hazards/${hazardId}`);
+    return response.data;
+  },
+
+  // 5. Nominatim Place Search
   async searchPlaces(query: string) {
     if (!query || query.length < 2) return [];
     try {
@@ -84,5 +115,6 @@ export const api = {
     }
   },
 };
+
 
 export default apiClient;

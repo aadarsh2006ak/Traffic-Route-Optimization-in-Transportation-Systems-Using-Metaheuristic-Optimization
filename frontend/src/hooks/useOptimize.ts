@@ -14,6 +14,7 @@ export const useOptimize = () => {
     isRoundTrip,
     trafficEnabled,
     trafficHour,
+    hazardsEnabled,
     mileage,
     fuelPrice,
     algorithmParams,
@@ -41,7 +42,7 @@ export const useOptimize = () => {
     clearLiveHistory();
     setLiveEnergy(null);
 
-    const payload: OptimizeRequest = {
+    const payload: OptimizeRequest & { hazards_enabled?: boolean } = {
       start_location: startLocation,
       stops,
       algorithm,
@@ -50,6 +51,7 @@ export const useOptimize = () => {
       round_trip: isRoundTrip,
       traffic_enabled: trafficEnabled,
       traffic_hour: trafficHour,
+      hazards_enabled: hazardsEnabled,
       mileage_km_per_l: mileage,
       fuel_price_per_l: fuelPrice,
       algorithm_params: algorithmParams,
@@ -62,7 +64,6 @@ export const useOptimize = () => {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-
         ws.send(JSON.stringify(payload));
       };
 
@@ -98,7 +99,7 @@ export const useOptimize = () => {
       await runRestFallback(payload);
     }
 
-    async function runRestFallback(reqPayload: OptimizeRequest) {
+    async function runRestFallback(reqPayload: OptimizeRequest & { hazards_enabled?: boolean }) {
       try {
         const data = await api.optimize(reqPayload);
         setOptimizedResult(data);
@@ -117,6 +118,7 @@ export const useOptimize = () => {
     isRoundTrip,
     trafficEnabled,
     trafficHour,
+    hazardsEnabled,
     mileage,
     fuelPrice,
     algorithmParams,
@@ -124,3 +126,4 @@ export const useOptimize = () => {
 
   return { runOptimization, error };
 };
+

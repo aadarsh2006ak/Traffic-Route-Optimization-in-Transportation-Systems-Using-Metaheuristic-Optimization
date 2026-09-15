@@ -4,11 +4,16 @@ import { Sidebar } from './components/Sidebar';
 import { RouteOptimizer } from './pages/RouteOptimizer';
 import { BenchmarkLab } from './pages/BenchmarkLab';
 import { NetworkGraph } from './pages/NetworkGraph';
-import { Map, Award, Network, Cpu, SlidersHorizontal } from 'lucide-react';
+import { VisionRadar } from './pages/VisionRadar';
+import { Map, Award, Network, Cpu, SlidersHorizontal, Radio, ShieldAlert, Zap } from 'lucide-react';
+import { useOptimize } from './hooks/useOptimize';
 
 export const App: React.FC = () => {
-  const { activeTab, setActiveTab, algorithm, stops } = useAppStore();
+  const { activeTab, setActiveTab, algorithm, stops, activeHazards, hazardsEnabled } = useAppStore();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { runOptimization } = useOptimize();
+
+  const hasBlockedHazard = activeHazards.some((h) => h.is_blocked || h.severity >= 0.85);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050711] text-gray-100 font-sans">
@@ -62,6 +67,23 @@ export const App: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setActiveTab('vision')}
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap relative ${
+                  activeTab === 'vision'
+                    ? 'bg-red-500/20 text-red-300 border border-red-400 shadow-neon-red'
+                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
+                }`}
+              >
+                <Radio className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeHazards.length > 0 ? 'text-red-400 animate-pulse' : ''}`} />
+                <span>Vision Radar</span>
+                {activeHazards.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[9px] font-mono font-bold">
+                    {activeHazards.length}
+                  </span>
+                )}
+              </button>
+
+              <button
                 onClick={() => setActiveTab('benchmark')}
                 className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
                   activeTab === 'benchmark'
@@ -85,8 +107,19 @@ export const App: React.FC = () => {
             </nav>
           </div>
 
-          {/* Top Status HUD Badges (Collapsible / Compact on mobile) */}
+          {/* Top Status HUD Badges */}
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            {hazardsEnabled && activeHazards.length > 0 && (
+              <div
+                onClick={() => setActiveTab('vision')}
+                className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 bg-red-950/60 border border-red-500/40 rounded-full text-[10px] sm:text-xs font-mono text-red-300 animate-pulse hover:bg-red-900/60 transition-colors"
+                title="Click to open Vision Radar"
+              >
+                <ShieldAlert className="w-3 h-3 text-red-400" />
+                <span>{activeHazards.length} CV Incidents</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-[#0a0f1d] border border-cyan-500/30 rounded-full text-[10px] sm:text-xs font-mono text-cyan-400">
               <Cpu className="w-3 h-3 text-cyan-400" />
               <span className="truncate max-w-[120px]">{algorithm}</span>
@@ -99,9 +132,42 @@ export const App: React.FC = () => {
           </div>
         </header>
 
+        {/* Global Critical Incident Warning Banner */}
+        {hasBlockedHazard && activeTab !== 'vision' && (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-red-950/80 via-red-900/40 to-[#0a0f1d] border border-red-500/50 shadow-lg text-xs animate-in fade-in duration-300">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-red-400 animate-bounce flex-shrink-0" />
+              <div>
+                <span className="font-bold text-red-300 font-orbitron">
+                  CRITICAL ROAD BLOCKAGE DETECTED:
+                </span>{' '}
+                <span className="text-gray-300">
+                  CCTV vision model detected severe blockage on network corridor.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setActiveTab('vision')}
+                className="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-orbitron text-[11px] border border-gray-700 transition-all"
+              >
+                Inspect
+              </button>
+              <button
+                onClick={() => runOptimization()}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-orbitron text-[11px] font-bold shadow-lg transition-all"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                <span>Re-Route Fleet</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Dynamic Page Views */}
         <div className="flex-1 pb-16 sm:pb-6 min-h-0">
           {activeTab === 'optimizer' && <RouteOptimizer />}
+          {activeTab === 'vision' && <VisionRadar />}
           {activeTab === 'benchmark' && <BenchmarkLab />}
           {activeTab === 'graph' && <NetworkGraph />}
         </div>
@@ -120,3 +186,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
