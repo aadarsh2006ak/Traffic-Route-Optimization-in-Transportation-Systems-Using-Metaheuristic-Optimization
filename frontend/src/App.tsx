@@ -5,19 +5,34 @@ import { RouteOptimizer } from './pages/RouteOptimizer';
 import { BenchmarkLab } from './pages/BenchmarkLab';
 import { NetworkGraph } from './pages/NetworkGraph';
 import { VisionRadar } from './pages/VisionRadar';
-import { Map, Award, Network, Cpu, SlidersHorizontal, Radio, ShieldAlert, Zap } from 'lucide-react';
+import { RunHistory } from './pages/RunHistory';
+import { GuideModal } from './components/GuideModal';
+import {
+  Map,
+  Award,
+  Network,
+  Cpu,
+  SlidersHorizontal,
+  Radio,
+  ShieldAlert,
+  Zap,
+  Database,
+  HelpCircle,
+  Sparkles,
+} from 'lucide-react';
 import { useOptimize } from './hooks/useOptimize';
 
 export const App: React.FC = () => {
   const { activeTab, setActiveTab, algorithm, stops, activeHazards, hazardsEnabled } = useAppStore();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { runOptimization } = useOptimize();
 
   const hasBlockedHazard = activeHazards.some((h) => h.is_blocked || h.severity >= 0.85);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050711] text-gray-100 font-sans">
-      {/* 1. Desktop Sidebar (Visible on screens >= 1024px) */}
+      {/* 1. Desktop Sidebar */}
       <div className="hidden lg:flex lg:w-80 xl:w-96 h-screen flex-shrink-0">
         <Sidebar />
       </div>
@@ -53,11 +68,11 @@ export const App: React.FC = () => {
               <span>Stops & Config</span>
             </button>
 
-            {/* Navigation Tab Buttons (Scrollable on small mobile) */}
+            {/* Navigation Tab Buttons */}
             <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
               <button
                 onClick={() => setActiveTab('optimizer')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
                   activeTab === 'optimizer'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-neon-cyan'
                     : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
@@ -68,7 +83,7 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('vision')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap relative ${
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap relative ${
                   activeTab === 'vision'
                     ? 'bg-red-500/20 text-red-300 border border-red-400 shadow-neon-red'
                     : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
@@ -85,30 +100,49 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('benchmark')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
                   activeTab === 'benchmark'
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-400 shadow-neon-purple'
                     : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
                 }`}
               >
-                <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Benchmark</span>
+                <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>500-Node Benchmarks</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('graph')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
                   activeTab === 'graph'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400'
                     : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
                 }`}
               >
-                <Network className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Graph</span>
+                <Network className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Graph & Traffic θ(t)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
+                  activeTab === 'history'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-400'
+                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
+                }`}
+              >
+                <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Run History</span>
               </button>
             </nav>
           </div>
 
-          {/* Top Status HUD Badges */}
+          {/* Top Status HUD & User Guide Modal Button */}
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => setIsGuideOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-900/50 to-cyan-900/50 hover:from-purple-800/60 hover:to-cyan-800/60 border border-cyan-400/40 rounded-full text-[11px] font-orbitron text-cyan-200 shadow-md transition-all"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Guide & Docs</span>
+            </button>
+
             {hazardsEnabled && activeHazards.length > 0 && (
               <div
                 onClick={() => setActiveTab('vision')}
@@ -116,18 +150,13 @@ export const App: React.FC = () => {
                 title="Click to open Vision Radar"
               >
                 <ShieldAlert className="w-3 h-3 text-red-400" />
-                <span>{activeHazards.length} CV Incidents</span>
+                <span>{activeHazards.length} Incidents</span>
               </div>
             )}
 
             <div className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-[#0a0f1d] border border-cyan-500/30 rounded-full text-[10px] sm:text-xs font-mono text-cyan-400">
               <Cpu className="w-3 h-3 text-cyan-400" />
               <span className="truncate max-w-[120px]">{algorithm}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-[#0a0f1d] border border-emerald-500/30 rounded-full text-[10px] sm:text-xs font-mono text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="hidden sm:inline">FastAPI & WS</span> Online
             </div>
           </div>
         </header>
@@ -142,7 +171,7 @@ export const App: React.FC = () => {
                   CRITICAL ROAD BLOCKAGE DETECTED:
                 </span>{' '}
                 <span className="text-gray-300">
-                  CCTV vision model detected severe blockage on network corridor.
+                  CCTV vision model detected severe blockage on transport corridor.
                 </span>
               </div>
             </div>
@@ -170,6 +199,7 @@ export const App: React.FC = () => {
           {activeTab === 'vision' && <VisionRadar />}
           {activeTab === 'benchmark' && <BenchmarkLab />}
           {activeTab === 'graph' && <NetworkGraph />}
+          {activeTab === 'history' && <RunHistory />}
         </div>
 
         {/* Mobile Floating Action Button to configure stops & params */}
@@ -180,10 +210,12 @@ export const App: React.FC = () => {
           <SlidersHorizontal className="w-3.5 h-3.5" />
           <span>Fleet & Stops ({stops.length})</span>
         </button>
+
+        {/* Interactive Guide & Documentation Modal */}
+        <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       </main>
     </div>
   );
 };
 
 export default App;
-

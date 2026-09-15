@@ -75,8 +75,8 @@ export interface HazardItem {
 
 export interface AppState {
   // Navigation
-  activeTab: 'optimizer' | 'benchmark' | 'graph' | 'vision';
-  setActiveTab: (tab: 'optimizer' | 'benchmark' | 'graph' | 'vision') => void;
+  activeTab: 'optimizer' | 'benchmark' | 'graph' | 'vision' | 'history';
+  setActiveTab: (tab: 'optimizer' | 'benchmark' | 'graph' | 'vision' | 'history') => void;
 
   // Stops & Depot
   startLocation: LocationNode | null;
