@@ -3,11 +3,11 @@
 from fastapi import FastAPI
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
-from .api import optimize_router, benchmark_router, graph_router, ws_router, hazard_router
+from .api import optimize_router, benchmark_router, graph_router, ws_router, hazard_router, history_router
 
 app = FastAPI(
     title="Quantum Route Optimizer API",
-    description="Enterprise Quantum-Inspired Metaheuristic (QPSO) Transportation Optimization Engine",
+    description="Enterprise Quantum-Inspired Metaheuristic (QPSO) Transportation Optimization Engine - SIH 2026 PS1",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -28,7 +28,7 @@ app.include_router(benchmark_router)
 app.include_router(graph_router)
 app.include_router(ws_router)
 app.include_router(hazard_router)
-
+app.include_router(history_router)
 
 @app.get("/")
 def root():
@@ -36,7 +36,8 @@ def root():
         "message": "Quantum Route Optimizer API is online.",
         "version": "2.0.0",
         "docs": "/docs",
-        "websocket": "/ws/optimize"
+        "websocket": "/ws/optimize",
+        "benchmark_scenarios": "/api/v1/benchmark/scenarios"
     }
 
 @app.get("/health")

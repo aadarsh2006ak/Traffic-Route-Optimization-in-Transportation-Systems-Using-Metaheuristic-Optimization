@@ -9,6 +9,8 @@ from ..services.osrm_service import osrm_service
 # pyrefly: ignore [missing-import]
 from ..services.cv_hazard_service import cv_hazard_service
 # pyrefly: ignore [missing-import]
+from ..services.db_service import db_service
+# pyrefly: ignore [missing-import]
 from ..core.constraints import constraint_handler
 
 router = APIRouter(prefix="/api/v1", tags=["Optimization"])
@@ -121,6 +123,26 @@ def optimize_route(request: OptimizeRequest):
 
     validation = constraint_handler.validate_solution(routes_list, request.vehicle_capacity)
 
+    # Log to SQLite DB persistence
+    try:
+        db_service.log_optimization(
+            algorithm=algo_name,
+            stop_count=len(stops_dict),
+            fleet_size=request.fleet_size or 1,
+            vehicle_capacity=request.vehicle_capacity or 0,
+            traffic_hour=request.traffic_hour or 9.0,
+            traffic_enabled=bool(request.traffic_enabled),
+            total_distance_km=round(total_km, 2),
+            duration_min=round(total_min, 1),
+            runtime_sec=stats.get("runtime", 0.0),
+            iterations=stats.get("iterations", 0),
+            tunnels=stats.get("tunnels", 0),
+            hazards_avoided=len(affected_hazard_edges),
+            summary_data={"cost_inr": round(total_cost, 2), "fuel_l": round(total_fuel, 2)}
+        )
+    except Exception:
+        pass
+
     return {
         "status": "success",
         "algorithm_used": algo_name,
@@ -145,4 +167,3 @@ def optimize_route(request: OptimizeRequest):
         },
         "optimization_stats": stats
     }
-

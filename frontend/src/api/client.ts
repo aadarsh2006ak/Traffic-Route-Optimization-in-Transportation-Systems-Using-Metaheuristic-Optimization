@@ -44,7 +44,6 @@ const apiClient = axios.create({
   },
 });
 
-
 export const api = {
   // 1. Optimize Route
   async optimize(data: OptimizeRequest & { hazards_enabled?: boolean }) {
@@ -58,7 +57,39 @@ export const api = {
     return response.data;
   },
 
-  // 3. Network Graph
+  // 3. Large-Scale 500-Node 3-Scenario Benchmarks (SIH 2026 PS1 Deliverable 5)
+  async getLargeScaleScenarios() {
+    const response = await apiClient.get('/benchmark/scenarios');
+    return response.data;
+  },
+
+  async runLiveScenario(scenario: string = 'peak_hour', nodeLimit: number = 40, fleetSize: number = 4) {
+    const response = await apiClient.post('/benchmark/scenarios/run', {
+      scenario,
+      node_limit: nodeLimit,
+      fleet_size: fleetSize,
+    });
+    return response.data;
+  },
+
+  // 4. Google Route Solver Commercial Baseline (Bonus 3)
+  async runGoogleBaseline(data: BenchmarkRequest) {
+    const response = await apiClient.post('/benchmark/google-baseline', data);
+    return response.data;
+  },
+
+  // 5. Run History & Persistence (Bonus 5)
+  async getOptimizationHistory(limit: number = 25) {
+    const response = await apiClient.get(`/history/runs?limit=${limit}`);
+    return response.data;
+  },
+
+  async getBenchmarkHistory(limit: number = 10) {
+    const response = await apiClient.get(`/history/benchmarks?limit=${limit}`);
+    return response.data;
+  },
+
+  // 6. Network Graph
   async buildGraph(nodes: LocationNode[], trafficHour = 9.0) {
     const response = await apiClient.post('/graph/build', {
       nodes,
@@ -67,7 +98,7 @@ export const api = {
     return response.data;
   },
 
-  // 4. Computer Vision Hazards Endpoints
+  // 7. Computer Vision Hazards Endpoints
   async getActiveHazards() {
     const response = await apiClient.get('/hazards/active');
     return response.data;
@@ -98,7 +129,7 @@ export const api = {
     return response.data;
   },
 
-  // 5. Nominatim Place Search
+  // 8. Nominatim Place Search
   async searchPlaces(query: string) {
     if (!query || query.length < 2) return [];
     try {
@@ -115,6 +146,5 @@ export const api = {
     }
   },
 };
-
 
 export default apiClient;
