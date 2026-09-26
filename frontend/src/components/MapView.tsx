@@ -1,84 +1,95 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, Popup, Circle, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppStore } from '../store/appStore';
-import { Navigation, Download, Layers, ShieldAlert, AlertTriangle, Zap } from 'lucide-react';
+import { Navigation, Download, Layers, ShieldAlert, Zap, Radio, MapPin, Plus, Flag } from 'lucide-react';
 import { useOptimize } from '../hooks/useOptimize';
 
+// Custom Map Click Handler component
+const MapClickHandler: React.FC<{
+  onMapClick: (lat: number, lng: number) => void;
+}> = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
+
 // Custom SVG Icons for Stops & Depot
-const createIcon = (color: string, label: string, isDepot = false) => {
+const createMarkerIcon = (color: string, label: string, isDepot = false) => {
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-map-node',
     html: `
       <div style="
-        background: ${isDepot ? '#00e676' : color};
+        background: ${isDepot ? '#00f0ff' : color};
+        color: ${isDepot ? '#040711' : '#ffffff'};
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        border-radius: 9999px;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        box-shadow: 0 0 14px ${isDepot ? 'rgba(0, 240, 255, 0.8)' : color + '90'}, 0 4px 8px rgba(0,0,0,0.8);
+      ">
+        ${label}
+      </div>
+    `,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+};
+
+// Custom Pulsing Icon for Hazards
+const createHazardIcon = (hazardType: string) => {
+  let emoji = '⚠️';
+  let bgColor = '#ffb700';
+  let glowColor = 'rgba(255, 183, 0, 0.6)';
+
+  if (hazardType === 'ACCIDENT') {
+    emoji = '💥';
+    bgColor = '#ff3b30';
+    glowColor = 'rgba(255, 59, 48, 0.7)';
+  } else if (hazardType === 'POTHOLE_CLUSTER') {
+    emoji = '🕳️';
+    bgColor = '#ffb700';
+    glowColor = 'rgba(255, 183, 0, 0.6)';
+  } else if (hazardType === 'WATERLOGGING') {
+    emoji = '🌊';
+    bgColor = '#00f0ff';
+    glowColor = 'rgba(0, 240, 255, 0.6)';
+  } else if (hazardType === 'CONSTRUCTION') {
+    emoji = '🚧';
+    bgColor = '#eab308';
+    glowColor = 'rgba(234, 179, 8, 0.6)';
+  }
+
+  return L.divIcon({
+    className: 'custom-map-hazard',
+    html: `
+      <div style="
+        background: ${bgColor};
         color: white;
-        border: 2px solid white;
-        border-radius: 50%;
+        border: 1.5px solid white;
+        border-radius: 9999px;
         width: 28px;
         height: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 11px;
-        font-weight: bold;
-        box-shadow: 0 0 12px ${color};
+        font-size: 12px;
+        box-shadow: 0 0 14px ${glowColor}, 0 4px 8px rgba(0,0,0,0.8);
       ">
-        ${label}
+        ${emoji}
       </div>
     `,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
-  });
-};
-
-// Custom Pulsing Icon for Hazards (Accidents, Potholes, Floods)
-const createHazardIcon = (hazardType: string, isBlocked: boolean) => {
-  let iconEmoji = '⚠️';
-  let bgColor = '#ff9100';
-  let glowColor = 'rgba(255, 145, 0, 0.7)';
-
-  if (hazardType === 'ACCIDENT') {
-    iconEmoji = '💥';
-    bgColor = '#ff2b2b';
-    glowColor = 'rgba(255, 43, 43, 0.85)';
-  } else if (hazardType === 'POTHOLE_CLUSTER') {
-    iconEmoji = '🕳️';
-    bgColor = '#ff9100';
-    glowColor = 'rgba(255, 145, 0, 0.7)';
-  } else if (hazardType === 'WATERLOGGING') {
-    iconEmoji = '🌊';
-    bgColor = '#00f3ff';
-    glowColor = 'rgba(0, 243, 255, 0.7)';
-  } else if (hazardType === 'CONSTRUCTION') {
-    iconEmoji = '🚧';
-    bgColor = '#ffd600';
-    glowColor = 'rgba(255, 214, 0, 0.7)';
-  }
-
-  return L.divIcon({
-    className: 'custom-hazard-marker',
-    html: `
-      <div style="
-        background: ${bgColor};
-        color: white;
-        border: 2px solid white;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        box-shadow: 0 0 16px ${glowColor};
-        animation: pulse 1.5s infinite;
-      ">
-        ${iconEmoji}
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
   });
 };
 
@@ -88,7 +99,7 @@ const BoundsFitter: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   useEffect(() => {
     if (coords && coords.length > 0) {
       const bounds = L.latLngBounds(coords.map((c) => [c[0], c[1]]));
-      map.fitBounds(bounds, { padding: [40, 40] });
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
   }, [coords, map]);
   return null;
@@ -98,7 +109,9 @@ export const MapView: React.FC = () => {
   const {
     optimizedResult,
     startLocation,
+    setStartLocation,
     stops,
+    addStop,
     trafficEnabled,
     trafficHour,
     activeHazards,
@@ -107,10 +120,48 @@ export const MapView: React.FC = () => {
   } = useAppStore();
 
   const { runOptimization } = useOptimize();
+  const [clickedCoords, setClickedCoords] = useState<[number, number] | null>(null);
+  const [mapTheme, setMapTheme] = useState<'voyager' | 'dark' | 'streets' | 'satellite'>('voyager');
 
-  const vehicleColors = ['#00f3ff', '#ff9100', '#bc13fe', '#00e676', '#ff2b2b'];
+  const cartoApiKey = (import.meta as any).env?.VITE_CARTO_API_KEY;
+  const cartoParam = cartoApiKey ? `?key=${cartoApiKey}` : '';
 
-  // Calculate default center
+  const tileLayers = {
+    voyager: {
+      url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png${cartoParam}`,
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
+      subdomains: 'abcd',
+      maxZoom: 20,
+    },
+    dark: {
+      url: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoParam}`,
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
+      subdomains: 'abcd',
+      maxZoom: 20,
+    },
+    streets: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      subdomains: 'abc',
+      maxZoom: 19,
+    },
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: '&copy; Esri &mdash; Earthstar Geographics',
+      subdomains: 'abc',
+      maxZoom: 18,
+    },
+  };
+
+  const vehiclePalette = [
+    '#00f0ff', // Cyan
+    '#00ff9d', // Mint
+    '#ffb700', // Amber
+    '#bf5af2', // Purple
+    '#ff3b30', // Rose
+  ];
+
+  // Default center based on depot or first stop
   const center: [number, number] = startLocation
     ? startLocation.coords
     : stops.length > 0
@@ -120,19 +171,19 @@ export const MapView: React.FC = () => {
   // Export CSV Manifest
   const handleDownloadCSV = () => {
     if (!optimizedResult) return;
+    const markers = optimizedResult.routes?.markers || optimizedResult.markers || [];
     const rows = [
       ['Vehicle ID', 'Stop Sequence', 'Location Name', 'Latitude', 'Longitude', 'Time Window'],
     ];
 
-    optimizedResult.routes.markers.forEach((m) => {
-      rows.push([
-        `Vehicle ${m.vehicle_id + 1}`,
-        m.stop_idx.toString(),
-        `"${m.name.replace(/"/g, '""')}"`,
-        m.coords[0].toString(),
-        m.coords[1].toString(),
-        m.window ? `${m.window[0]}-${m.window[1]}h` : 'Unconstrained',
-      ]);
+    markers.forEach((m: any) => {
+      const vId = (m.vehicle_id !== undefined ? m.vehicle_id : (m.vehicle_idx ?? 0)) + 1;
+      const sIdx = m.stop_idx ?? m.seq ?? 0;
+      const mName = (m.name || '').replace(/"/g, '""');
+      const lat = m.coords ? m.coords[0] : '';
+      const lng = m.coords ? m.coords[1] : '';
+      const win = m.window ? `${m.window[0]}-${m.window[1]}h` : 'Unconstrained';
+      rows.push([`Vehicle ${vId}`, sIdx.toString(), `"${mName}"`, lat.toString(), lng.toString(), win]);
     });
 
     const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n');
@@ -151,85 +202,249 @@ export const MapView: React.FC = () => {
   const hasBlockedHazard = activeHazards.some((h) => h.is_blocked || h.severity >= 0.85);
 
   return (
-    <div className="relative w-full h-[380px] sm:h-[460px] md:h-[540px] lg:h-[600px] rounded-xl overflow-hidden glass-panel border border-cyan-500/20 shadow-2xl">
-      {/* Top Map Controls HUD */}
-      <div className="absolute top-2.5 inset-x-2.5 z-[1000] flex items-center justify-between pointer-events-none gap-2">
-        {/* Top Map HUD Bar */}
-        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-[#0a0f1d]/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border border-cyan-500/30 shadow-md">
-          <Navigation className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse flex-shrink-0" />
-          <span className="font-orbitron text-[10px] sm:text-xs tracking-wider text-cyan-400 font-semibold truncate max-w-[140px] sm:max-w-none">
-            FLEET RADAR
+    <div className="relative w-full h-full bg-[#040711] overflow-hidden select-none">
+      {/* Corner HUD Reticles */}
+      <div className="hud-corner-tl" />
+      <div className="hud-corner-tr" />
+      <div className="hud-corner-bl" />
+      <div className="hud-corner-br" />
+
+      {/* Top Map HUD Bar (Non-Colliding Flex Layout) */}
+      <div className="absolute top-2 inset-x-2 z-[1000] flex flex-wrap items-center justify-between gap-1.5 pointer-events-none">
+        {/* Left Telemetry Pill */}
+        <div className="pointer-events-auto flex items-center gap-2 bg-[#060a16]/95 border border-[#1a2f52] px-2.5 py-1 text-[11px] font-mono shadow-xl">
+          <span className="flex items-center gap-1.5 text-[#00f0ff] font-bold">
+            <Radio className="w-3 h-3 animate-pulse text-[#00f0ff]" />
+            <span>ORBITAL RADAR</span>
           </span>
+
+          <span className="text-[#1a2f52]">|</span>
+
           {trafficEnabled && (
             <span
-              className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono whitespace-nowrap ${
-                isPeakHour ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-cyan-500/20 text-cyan-300'
+              className={`px-1.5 py-0.2 text-[10px] font-mono ${
+                isPeakHour
+                  ? 'bg-[#ff3b30]/20 text-[#ff3b30] border border-[#ff3b30]/40'
+                  : 'bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/40'
               }`}
             >
-              {isPeakHour ? '🔴 Peak' : '🟢 Free'}
+              {isPeakHour ? '🔴 Peak Surge' : '🟢 Normal Flow'}
             </span>
           )}
 
           {hazardsEnabled && activeHazards.length > 0 && (
-            <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-red-500/20 text-red-400 border border-red-500/40 flex items-center gap-1">
-              <ShieldAlert className="w-3 h-3 text-red-400" />
-              <span>{activeHazards.length} CV Hazards</span>
+            <span className="px-1.5 py-0.2 text-[10px] font-mono bg-[#ffb700]/20 text-[#ffb700] border border-[#ffb700]/40 flex items-center gap-1">
+              <ShieldAlert className="w-2.5 h-2.5 text-[#ffb700]" />
+              <span>{activeHazards.length} Incidents</span>
             </span>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="pointer-events-auto flex items-center gap-2">
+        {/* Center/Right Map Style Switcher & Action Buttons */}
+        <div className="pointer-events-auto flex items-center gap-1.5 flex-shrink-0">
+          {/* Map Layer Switcher */}
+          <div className="flex items-center bg-[#060a16]/95 border border-[#1a2f52] p-0.5 text-[10px] font-mono">
+            <button
+              type="button"
+              onClick={() => setMapTheme('voyager')}
+              className={`px-2 py-0.5 font-bold transition-all ${
+                mapTheme === 'voyager'
+                  ? 'bg-[#00f0ff] text-[#040711]'
+                  : 'text-[#526685] hover:text-white'
+              }`}
+            >
+              🧭 Voyager Vector
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapTheme('dark')}
+              className={`px-2 py-0.5 font-bold transition-all ${
+                mapTheme === 'dark'
+                  ? 'bg-[#00f0ff] text-[#040711]'
+                  : 'text-[#526685] hover:text-white'
+              }`}
+            >
+              🌙 Dark HUD
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapTheme('streets')}
+              className={`px-2 py-0.5 font-bold transition-all ${
+                mapTheme === 'streets'
+                  ? 'bg-[#00ff9d] text-[#040711]'
+                  : 'text-[#526685] hover:text-white'
+              }`}
+            >
+              🗺️ Streets
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapTheme('satellite')}
+              className={`px-2 py-0.5 font-bold transition-all ${
+                mapTheme === 'satellite'
+                  ? 'bg-[#ffb700] text-[#040711]'
+                  : 'text-[#526685] hover:text-white'
+              }`}
+            >
+              🛰️ Satellite
+            </button>
+          </div>
+
           {hasBlockedHazard && (
             <button
               onClick={() => runOptimization()}
-              className="flex items-center gap-1 sm:gap-1.5 bg-red-600/80 hover:bg-red-500 border border-red-400 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-orbitron transition-all shadow-lg animate-pulse"
-              title="Avoid Active Hazard Zones with QPSO"
+              className="flex items-center gap-1 bg-[#ff3b30] hover:bg-[#ff3b30]/80 text-white px-2.5 py-1 text-[11px] font-mono font-bold shadow-lg shadow-[#ff3b30]/30 animate-pulse border border-[#ff3b30]"
+              title="Avoid Obstacles & Blockades"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300" />
-              <span>⚡ Quantum Re-Route</span>
+              <Zap className="w-3 h-3 text-[#ffb700]" />
+              <span>⚡ Re-Route</span>
             </button>
           )}
 
           {optimizedResult && (
             <button
               onClick={handleDownloadCSV}
-              className="flex items-center gap-1 sm:gap-1.5 bg-[#bc13fe]/30 hover:bg-[#bc13fe]/50 border border-[#bc13fe]/60 text-purple-200 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-orbitron transition-all shadow-lg whitespace-nowrap"
+              className="flex items-center gap-1 bg-[#060a16]/95 hover:bg-[#0d182b] text-[#cbd5e1] hover:text-white px-2.5 py-1 text-[11px] font-mono border border-[#1a2f52] transition-all"
             >
-              <Download className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="hidden sm:inline">Export</span> Manifest
+              <Download className="w-3 h-3 text-[#00f0ff]" />
+              <span>Manifest</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Leaflet Map with Clean Dark OpenStreetMap Tiles */}
+      {/* Leaflet Map with High-Contrast Dark Tiles */}
       <MapContainer
         center={center}
         zoom={11}
+        zoomControl={false}
         scrollWheelZoom={true}
-        className="w-full h-full z-0"
-        style={{ background: '#050711' }}
+        className="w-full h-full z-0 cursor-crosshair"
+        style={{ background: '#060a16' }}
       >
+        {/* Click on Map to set Origin or add Stop */}
+        <MapClickHandler onMapClick={(lat, lng) => setClickedCoords([lat, lng])} />
+
+        {/* Place zoom controls at bottom-right to avoid any collision */}
+        <ZoomControl position="bottomright" />
+
+        {/* Crisp High-Definition Tile Layer */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          className="map-tiles-dark"
+          key={mapTheme}
+          attribution={tileLayers[mapTheme].attribution}
+          url={tileLayers[mapTheme].url}
+          subdomains={tileLayers[mapTheme].subdomains}
+          maxZoom={tileLayers[mapTheme].maxZoom}
         />
 
-        {optimizedResult && <BoundsFitter coords={optimizedResult.routes.coords} />}
+        {/* Temporary Interactive Pin for Clicked Coordinate */}
+        {clickedCoords && (
+          <Marker
+            position={clickedCoords}
+            icon={L.divIcon({
+              className: 'clicked-marker-pin',
+              html: `
+                <div style="
+                  background: #00f0ff;
+                  color: #040711;
+                  border: 2px solid #ffffff;
+                  border-radius: 9999px;
+                  width: 24px;
+                  height: 24px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 14px;
+                  font-weight: 900;
+                  box-shadow: 0 0 16px #00f0ff;
+                  animation: pulse 1s infinite;
+                ">
+                  +
+                </div>
+              `,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+            })}
+          >
+            <Popup
+              position={clickedCoords}
+              eventHandlers={{
+                remove: () => setClickedCoords(null),
+              }}
+              autoPan={true}
+            >
+              <div className="p-2.5 bg-[#060a16] text-white font-mono space-y-2 min-w-[210px]">
+                <div className="flex items-center justify-between border-b border-[#1a2f52] pb-1">
+                  <span className="text-[11px] font-bold text-[#00f0ff] flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-[#00f0ff]" />
+                    <span>CLICKED LOCATION</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setClickedCoords(null)}
+                    className="text-[#526685] hover:text-white text-xs px-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 font-mono">
+                  {clickedCoords[0].toFixed(4)}, {clickedCoords[1].toFixed(4)}
+                </p>
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStartLocation({
+                        name: `Origin Depot (${clickedCoords[0].toFixed(3)}, ${clickedCoords[1].toFixed(3)})`,
+                        coords: clickedCoords,
+                        demand: 0,
+                      });
+                      setClickedCoords(null);
+                    }}
+                    className="w-full py-1.5 px-2 bg-[#00f0ff] hover:bg-[#00f0ff]/80 text-[#040711] font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all shadow-hud-cyan"
+                  >
+                    <Flag className="w-3 h-3" />
+                    <span>Set as Starting Origin</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addStop({
+                        name: `Stop #${stops.length + 1} (${clickedCoords[0].toFixed(3)}, ${clickedCoords[1].toFixed(3)})`,
+                        coords: clickedCoords,
+                        demand: 2,
+                        window: [9, 14],
+                      });
+                      setClickedCoords(null);
+                    }}
+                    className="w-full py-1.5 px-2 bg-[#00ff9d] hover:bg-[#00ff9d]/80 text-[#040711] font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all shadow-hud-mint"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add as Delivery Stop</span>
+                  </button>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {optimizedResult?.routes?.coords && optimizedResult.routes.coords.length > 0 && (
+          <BoundsFitter coords={optimizedResult.routes.coords} />
+        )}
 
         {/* Polylines for each vehicle */}
-        {optimizedResult?.routes.routes_geo.map((geo, idx) => {
-          const color = isPeakHour ? '#ff2b2b' : vehicleColors[idx % vehicleColors.length];
+        {(optimizedResult?.routes?.routes_geo || optimizedResult?.routes_geometry || []).map((geo, idx) => {
+          const color = isPeakHour ? '#ff3b30' : vehiclePalette[idx % vehiclePalette.length];
           return (
             <Polyline
               key={idx}
               positions={geo}
               pathOptions={{
                 color: color,
-                weight: 4.5,
-                opacity: 0.9,
+                weight: 4,
+                opacity: 0.95,
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
@@ -239,22 +454,28 @@ export const MapView: React.FC = () => {
 
         {/* Markers for each stop */}
         {optimizedResult ? (
-          optimizedResult.routes.markers.map((m, mIdx) => {
-            const color = vehicleColors[m.vehicle_id % vehicleColors.length];
-            const isDepot = m.stop_idx === 0;
-            const label = isDepot ? '🏢' : m.is_last ? '🏁' : `${m.stop_idx}`;
+          (optimizedResult.routes?.markers || optimizedResult.markers || []).map((m: any, mIdx: number) => {
+            const vId = m.vehicle_id !== undefined ? m.vehicle_id : (m.vehicle_idx ?? 0);
+            const color = vehiclePalette[vId % vehiclePalette.length];
+            const isDepot = m.stop_idx === 0 || m.seq === 0 || m.type === 'depot';
+            const label = isDepot ? '★' : m.is_last ? '🏁' : `${m.stop_idx ?? m.seq ?? mIdx}`;
+            const coords = m.coords || [28.6139, 77.209];
             return (
               <Marker
                 key={mIdx}
-                position={m.coords}
-                icon={createIcon(color, label, isDepot)}
+                position={coords}
+                icon={createMarkerIcon(color, label, isDepot)}
               >
-                <Popup className="custom-leaflet-popup">
-                  <div className="bg-[#0b1021] text-gray-100 p-2 rounded text-xs font-sans">
-                    <p className="font-bold text-cyan-400 font-orbitron">{m.name}</p>
-                    <p className="text-gray-300 mt-1">Vehicle #{m.vehicle_id + 1} • Stop #{m.stop_idx}</p>
+                <Popup>
+                  <div className="p-2 space-y-1 font-mono">
+                    <p className="font-bold text-[#00f0ff] text-xs">{m.name || `Stop ${mIdx}`}</p>
+                    <p className="text-[11px] text-slate-300">
+                      Vehicle #{vId + 1} • Sequence #{m.stop_idx ?? m.seq ?? mIdx}
+                    </p>
                     {m.window && (
-                      <p className="text-purple-300 mt-0.5">🕒 Window: {m.window[0]}:00 - {m.window[1]}:00</p>
+                      <p className="text-[10px] text-[#ffb700]">
+                        🕒 Time Window: {m.window[0]}:00 - {m.window[1]}:00
+                      </p>
                     )}
                   </div>
                 </Popup>
@@ -263,60 +484,81 @@ export const MapView: React.FC = () => {
           })
         ) : (
           <>
+            {/* Setup Mode Markers (Depot + Stops before optimization) */}
             {startLocation && (
-              <Marker position={startLocation.coords} icon={createIcon('#00e676', '🏢', true)}>
-                <Popup>{startLocation.name} (Central Hub)</Popup>
+              <Marker
+                position={startLocation.coords}
+                icon={createMarkerIcon('#00f0ff', '★', true)}
+              >
+                <Popup>
+                  <div className="p-2 font-mono">
+                    <p className="font-bold text-[#00f0ff] text-xs">{startLocation.name}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Central Logistics Depot</p>
+                  </div>
+                </Popup>
               </Marker>
             )}
-            {stops.map((s, idx) => (
-              <Marker key={idx} position={s.coords} icon={createIcon('#00f3ff', `${idx + 1}`)}>
-                <Popup>{s.name}</Popup>
+
+            {stops.map((stop, idx) => (
+              <Marker
+                key={idx}
+                position={stop.coords}
+                icon={createMarkerIcon('#00ff9d', `${idx + 1}`)}
+              >
+                <Popup>
+                  <div className="p-2 font-mono">
+                    <p className="font-bold text-[#00ff9d] text-xs">{stop.name}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Demand: {stop.demand || 1} kg
+                      {stop.window ? ` • Window: ${stop.window[0]}-${stop.window[1]}h` : ''}
+                    </p>
+                  </div>
+                </Popup>
               </Marker>
             ))}
           </>
         )}
 
-        {/* Active Computer Vision Hazard Markers & Impact Circles */}
+        {/* Hazard Rings and Markers */}
         {hazardsEnabled &&
-          activeHazards.map((hz) => {
-            const circleColor = hz.hazard_type === 'ACCIDENT' ? '#ff2b2b' : hz.hazard_type === 'WATERLOGGING' ? '#00f3ff' : '#ff9100';
+          activeHazards.map((h) => {
+            const hazardColor =
+              h.hazard_type === 'ACCIDENT'
+                ? '#ff3b30'
+                : h.hazard_type === 'WATERLOGGING'
+                ? '#00f0ff'
+                : '#ffb700';
+
             return (
-              <React.Fragment key={hz.hazard_id}>
-                {/* Visual Impact Radius */}
+              <React.Fragment key={h.hazard_id}>
                 <Circle
-                  center={hz.location}
-                  radius={hz.radius_km * 1000}
+                  center={h.location}
+                  radius={(h.radius_km || 0.6) * 1000}
                   pathOptions={{
-                    color: circleColor,
-                    fillColor: circleColor,
-                    fillOpacity: 0.18,
+                    color: hazardColor,
+                    fillColor: hazardColor,
+                    fillOpacity: h.is_blocked ? 0.3 : 0.15,
                     weight: 1.5,
-                    dashArray: hz.is_blocked ? '4, 4' : undefined,
+                    dashArray: '4,4',
                   }}
                 />
-
-                {/* Hazard Marker Pin */}
-                <Marker
-                  position={hz.location}
-                  icon={createHazardIcon(hz.hazard_type, hz.is_blocked)}
-                >
-                  <Popup className="custom-leaflet-popup">
-                    <div className="bg-[#0b1021] text-gray-100 p-2.5 rounded text-xs font-sans space-y-1.5 min-w-[200px]">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-red-400 font-orbitron">{hz.title}</span>
-                        <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded font-mono">
-                          {hz.is_blocked ? 'BLOCKED' : 'DELAY'}
+                <Marker position={h.location} icon={createHazardIcon(h.hazard_type)}>
+                  <Popup>
+                    <div className="p-2.5 space-y-1 max-w-xs font-mono">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-xs" style={{ color: hazardColor }}>
+                          {h.title}
+                        </span>
+                        <span className="text-[9px] px-1 py-0.2 bg-white/10 text-slate-200">
+                          {Math.round(h.severity * 100)}% Sev
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-300">{hz.description}</p>
-                      <div className="text-[10px] font-mono text-gray-400 border-t border-gray-800 pt-1">
-                        Severity: {(hz.severity * 100).toFixed(0)}% • Radius: {hz.radius_km}km
-                      </div>
+                      <p className="text-[10px] text-slate-300 leading-snug">{h.description}</p>
                       <button
-                        onClick={() => removeHazard(hz.hazard_id)}
-                        className="w-full py-1 text-[10px] font-orbitron bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded transition-all mt-1"
+                        onClick={() => removeHazard(h.hazard_id)}
+                        className="mt-1 text-[9px] text-[#526685] hover:text-white bg-[#060a16] border border-[#1a2f52] px-2 py-0.5 w-full text-center"
                       >
-                        Dismiss / Mark Resolved
+                        Clear Incident
                       </button>
                     </div>
                   </Popup>
@@ -326,22 +568,23 @@ export const MapView: React.FC = () => {
           })}
       </MapContainer>
 
-      {/* Floating Fleet Legend Overlay */}
+      {/* Floating Fleet Legend Overlay on Bottom Left */}
       {optimizedResult && (
-        <div className="absolute bottom-4 left-4 z-[1000] bg-[#0a0f1d]/90 backdrop-blur-md p-3 rounded-lg border border-cyan-500/20 text-xs">
-          <div className="font-orbitron text-[10px] text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-            <Layers className="w-3 h-3 text-cyan-400" /> Active Fleet Dispatch
+        <div className="absolute bottom-2 left-2 z-[1000] bg-[#060a16]/95 border border-[#1a2f52] p-2 text-xs shadow-2xl space-y-1 font-mono">
+          <div className="text-[10px] text-[#526685] uppercase tracking-wider flex items-center gap-1">
+            <Layers className="w-3 h-3 text-[#00f0ff]" />
+            <span>Active Fleet</span>
           </div>
-          <div className="space-y-1.5">
-            {optimizedResult.routes.routes_geo.map((_, i) => (
-              <div key={i} className="flex items-center gap-2">
+          <div className="space-y-0.5">
+            {(optimizedResult.routes?.routes_geo || optimizedResult.routes_geometry || []).map((_, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-[10px]">
                 <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ background: vehicleColors[i % vehicleColors.length] }}
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: vehiclePalette[i % vehiclePalette.length] }}
                 />
-                <span className="text-gray-200 font-mono">Vehicle {i + 1}</span>
-                <span className="text-[10px] text-cyan-400 ml-auto border border-cyan-500/30 px-1.5 py-0.2 rounded">
-                  ONLINE
+                <span className="text-slate-200 font-bold">V0{i + 1}</span>
+                <span className="text-[9px] text-[#00ff9d] ml-auto">
+                  DISPATCHED
                 </span>
               </div>
             ))}
@@ -352,3 +595,4 @@ export const MapView: React.FC = () => {
   );
 };
 
+export default MapView;

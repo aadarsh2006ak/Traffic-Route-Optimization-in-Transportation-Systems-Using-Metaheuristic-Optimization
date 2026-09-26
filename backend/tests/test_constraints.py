@@ -2,7 +2,7 @@
 import pytest
 import numpy as np
 from backend.app.core.constraints import constraint_handler
-from backend.app.core.traffic_sim import traffic_sim
+from backend.app.graph.traffic_simulator import traffic_simulator as traffic_sim
 
 def test_traffic_multiplier():
     # Peak hour morning

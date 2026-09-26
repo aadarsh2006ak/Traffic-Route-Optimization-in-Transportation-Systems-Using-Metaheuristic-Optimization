@@ -1,7 +1,8 @@
 # backend/app/core/constraints.py
 from typing import List, Dict, Any, Tuple
 import numpy as np
-from .traffic_sim import traffic_sim
+# pyrefly: ignore [missing-import]
+from ..graph.traffic_simulator import traffic_simulator as traffic_sim
 
 class ConstraintHandler:
     """

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAppStore } from '../store/appStore';
-import { api, OptimizeRequest } from '../api/client';
+import { api, OptimizeRequest, BenchmarkRequest } from '../services/api';
 
 export const useOptimize = () => {
   const [error, setError] = useState<string | null>(null);
@@ -19,12 +19,28 @@ export const useOptimize = () => {
     fuelPrice,
     algorithmParams,
     setIsOptimizing,
+    setIsLoading,
     setLiveProgress,
     setLiveEnergy,
     appendLiveHistory,
     clearLiveHistory,
     setOptimizedResult,
+    setBenchmarkResults,
+    setIsBenchmarking,
+    setActiveTab
   } = useAppStore();
+
+  const runRestFallback = async (payload: any) => {
+    try {
+      const data = await api.optimize(payload);
+      setOptimizedResult(data);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || err?.message || 'Optimization failed');
+    } finally {
+      setIsOptimizing(false);
+      setIsLoading(false);
+    }
+  };
 
   const runOptimization = useCallback(async () => {
     if (!startLocation) {
@@ -38,22 +54,22 @@ export const useOptimize = () => {
 
     setError(null);
     setIsOptimizing(true);
+    setIsLoading(true);
     setLiveProgress(0);
     clearLiveHistory();
     setLiveEnergy(null);
 
-    const payload: OptimizeRequest & { hazards_enabled?: boolean } = {
+    const payload: OptimizeRequest = {
       start_location: startLocation,
       stops,
       algorithm,
       fleet_size: fleetSize,
+      num_vehicles: fleetSize,
       vehicle_capacity: vehicleCapacity,
       round_trip: isRoundTrip,
       traffic_enabled: trafficEnabled,
       traffic_hour: trafficHour,
       hazards_enabled: hazardsEnabled,
-      mileage_km_per_l: mileage,
-      fuel_price_per_l: fuelPrice,
       algorithm_params: algorithmParams,
     };
 
@@ -74,13 +90,15 @@ export const useOptimize = () => {
             setLiveProgress(msg.progress_pct);
             setLiveEnergy(msg.current_energy);
             appendLiveHistory(msg.current_energy);
-          } else if (msg.type === 'complete') {
+          } else if (msg.type === 'completed' || msg.type === 'complete') {
             setOptimizedResult(msg);
             setIsOptimizing(false);
+            setIsLoading(false);
             ws.close();
           } else if (msg.type === 'error') {
             setError(msg.message || 'Optimization failed');
             setIsOptimizing(false);
+            setIsLoading(false);
             ws.close();
           }
         } catch {
@@ -98,17 +116,6 @@ export const useOptimize = () => {
       wsSupported = false;
       await runRestFallback(payload);
     }
-
-    async function runRestFallback(reqPayload: OptimizeRequest & { hazards_enabled?: boolean }) {
-      try {
-        const data = await api.optimize(reqPayload);
-        setOptimizedResult(data);
-        setIsOptimizing(false);
-      } catch (err: any) {
-        setError(err?.response?.data?.detail || err?.message || 'Optimization execution failed.');
-        setIsOptimizing(false);
-      }
-    }
   }, [
     startLocation,
     stops,
@@ -119,11 +126,46 @@ export const useOptimize = () => {
     trafficEnabled,
     trafficHour,
     hazardsEnabled,
-    mileage,
-    fuelPrice,
     algorithmParams,
   ]);
 
-  return { runOptimization, error };
+  const runBenchmark = useCallback(async () => {
+    if (!startLocation || stops.length === 0) return;
+
+    setIsBenchmarking(true);
+    setError(null);
+
+    try {
+      const payload: BenchmarkRequest = {
+        start_location: startLocation,
+        stops,
+        algorithms: ['QPSO', 'Classical PSO', 'Genetic Algorithm', 'Ant Colony', 'Exact Solver'],
+        fleet_size: fleetSize,
+        num_vehicles: fleetSize,
+        vehicle_capacity: vehicleCapacity,
+        traffic_enabled: trafficEnabled,
+        traffic_hour: trafficHour,
+        trials_per_algo: 1,
+      };
+
+      const data = await api.benchmark(payload);
+      setBenchmarkResults(data);
+      setActiveTab('optimizer');
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || err?.message || 'Benchmark run failed');
+    } finally {
+      setIsBenchmarking(false);
+    }
+  }, [
+    startLocation,
+    stops,
+    fleetSize,
+    vehicleCapacity,
+    trafficEnabled,
+    trafficHour,
+  ]);
+
+  return { runOptimization, runBenchmark, error };
 };
 
+export default useOptimize;

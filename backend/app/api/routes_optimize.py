@@ -1,169 +1,35 @@
 # backend/app/api/routes_optimize.py
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Tuple
-# pyrefly: ignore [missing-import]
-from ..algorithms import ALGORITHM_REGISTRY, qpso_solver
-# pyrefly: ignore [missing-import]
-from ..services.osrm_service import osrm_service
-# pyrefly: ignore [missing-import]
-from ..services.cv_hazard_service import cv_hazard_service
-# pyrefly: ignore [missing-import]
-from ..services.db_service import db_service
-# pyrefly: ignore [missing-import]
-from ..core.constraints import constraint_handler
+from ..models.schemas import OptimizeRunRequest
+from ..services.route_service import route_service
+from ..utils.validators import validate_nodes_list
 
-router = APIRouter(prefix="/api/v1", tags=["Optimization"])
+router = APIRouter(tags=["Optimization Engine"])
 
-class LocationNode(BaseModel):
-    name: str
-    coords: Tuple[float, float]
-    demand: Optional[float] = 1.0
-    window: Optional[Tuple[float, float]] = None
-    service_time: Optional[float] = 0.15
-
-class OptimizeRequest(BaseModel):
-    start_location: LocationNode
-    stops: List[LocationNode]
-    algorithm: Optional[str] = "QPSO"
-    fleet_size: Optional[int] = Field(default=1, ge=1, le=10)
-    vehicle_capacity: Optional[int] = Field(default=0, ge=0)
-    round_trip: Optional[bool] = False
-    traffic_enabled: Optional[bool] = True
-    traffic_hour: Optional[float] = Field(default=9.0, ge=0.0, le=24.0)
-    hazards_enabled: Optional[bool] = True
-    mileage_km_per_l: Optional[float] = 12.0
-    fuel_price_per_l: Optional[float] = 96.0
-    algorithm_params: Optional[Dict[str, Any]] = None
-
-@router.post("/optimize")
-def optimize_route(request: OptimizeRequest):
+@router.post("/api/optimize/run")
+@router.post("/api/v1/optimize")
+def run_route_optimization(request: OptimizeRunRequest):
     """
-    Optimizes vehicle routes using Quantum-Inspired Metaheuristics (QPSO) or classical metaheuristics,
-    fusing OSRM road geometry, live traffic, and Computer Vision (CV) road hazard avoidance.
+    Executes Vehicle Routing Optimization using Quantum-Behaved PSO (QPSO) or benchmark metaheuristics.
+    Produces multi-vehicle schedules, road geometries, cost breakdowns, and live stats.
     """
-    if not request.stops:
-        raise HTTPException(status_code=400, detail="At least one destination stop is required.")
-
     start_dict = request.start_location.model_dump()
     stops_dict = [s.model_dump() for s in request.stops]
-    all_nodes = [start_dict] + stops_dict
 
-    # Build Distance and Time matrices from OSRM
-    dist_matrix, time_matrix = osrm_service.build_matrices(all_nodes)
+    validate_nodes_list(start_dict, stops_dict)
 
-    # Inject CV Road Damage & Accident Penalties into Cost Matrices
-    affected_hazard_edges = []
-    active_hazards = []
-    if request.hazards_enabled:
-        dist_matrix, time_matrix, affected_hazard_edges = cv_hazard_service.apply_hazards_to_matrices(
-            dist_matrix, time_matrix, all_nodes
-        )
-        active_hazards = cv_hazard_service.get_active_hazards()
-
-    # Select solver
-    algo_name = request.algorithm or "QPSO"
-    solver = ALGORITHM_REGISTRY.get(algo_name, qpso_solver)
-
-    # Run Solver
-    routes_list, stats = solver.solve(
-        start_node=start_dict,
-        stops_data=stops_dict,
-        dist_matrix=dist_matrix,
-        time_matrix=time_matrix,
-        n_vehicles=request.fleet_size,
-        vehicle_capacity=request.vehicle_capacity,
-        traffic_hour=request.traffic_hour,
-        traffic_enabled=request.traffic_enabled,
-        q_params=request.algorithm_params
+    result = route_service.execute_route_optimization(
+        start_location=start_dict,
+        stops=stops_dict,
+        algorithm=request.algorithm or "QPSO",
+        num_vehicles=request.num_vehicles or 1,
+        vehicle_capacity=request.vehicle_capacity or 0,
+        round_trip=request.round_trip or False,
+        traffic_enabled=request.traffic_enabled if request.traffic_enabled is not None else True,
+        traffic_hour=request.traffic_hour or 9.0,
+        hazards_enabled=request.hazards_enabled if request.hazards_enabled is not None else True,
+        algorithm_params=request.algorithm_params,
+        graph_id=request.graph_id
     )
 
-    # Process Vehicle Geometries & Markers
-    total_km = 0.0
-    total_min = 0.0
-    all_routes_geo = []
-    all_markers = []
-    all_coords = []
-    vehicle_metrics = []
-
-    for v_idx, route_nodes in enumerate(routes_list):
-        r_nodes = route_nodes[:]
-        if request.round_trip or request.fleet_size > 1:
-            r_nodes.append(r_nodes[0])
-
-        coords_seq = [n["coords"] for n in r_nodes]
-        path_geo, km, mins = osrm_service.get_route_geometry(coords_seq)
-
-        total_km += km
-        total_min += mins
-        all_routes_geo.append(path_geo if path_geo else coords_seq)
-
-        vehicle_metrics.append({
-            "vehicle_id": v_idx + 1,
-            "distance_km": round(km, 2),
-            "duration_min": round(mins, 1),
-            "stops_count": len(route_nodes) - 1
-        })
-
-        for s_idx, node in enumerate(r_nodes):
-            all_markers.append({
-                "coords": node["coords"],
-                "name": node["name"],
-                "vehicle_id": v_idx,
-                "stop_idx": s_idx,
-                "is_last": (s_idx == len(r_nodes) - 1),
-                "window": node.get("window")
-            })
-            all_coords.append(node["coords"])
-
-    # Fuel & Operational Cost Calculations
-    mileage = max(request.mileage_km_per_l, 0.1)
-    total_fuel = total_km / mileage
-    total_cost = total_fuel * request.fuel_price_per_l
-
-    validation = constraint_handler.validate_solution(routes_list, request.vehicle_capacity)
-
-    # Log to SQLite DB persistence
-    try:
-        db_service.log_optimization(
-            algorithm=algo_name,
-            stop_count=len(stops_dict),
-            fleet_size=request.fleet_size or 1,
-            vehicle_capacity=request.vehicle_capacity or 0,
-            traffic_hour=request.traffic_hour or 9.0,
-            traffic_enabled=bool(request.traffic_enabled),
-            total_distance_km=round(total_km, 2),
-            duration_min=round(total_min, 1),
-            runtime_sec=stats.get("runtime", 0.0),
-            iterations=stats.get("iterations", 0),
-            tunnels=stats.get("tunnels", 0),
-            hazards_avoided=len(affected_hazard_edges),
-            summary_data={"cost_inr": round(total_cost, 2), "fuel_l": round(total_fuel, 2)}
-        )
-    except Exception:
-        pass
-
-    return {
-        "status": "success",
-        "algorithm_used": algo_name,
-        "metrics": {
-            "distance_km": round(total_km, 2),
-            "duration_min": round(total_min, 1),
-            "fuel_liters": round(total_fuel, 2),
-            "cost_inr": round(total_cost, 2),
-            "vehicles": vehicle_metrics,
-            "feasibility": validation
-        },
-        "routes": {
-            "markers": all_markers,
-            "coords": all_coords,
-            "routes_geo": all_routes_geo
-        },
-        "hazards": {
-            "enabled": request.hazards_enabled,
-            "active_count": len(active_hazards),
-            "items": active_hazards,
-            "impacted_segments": affected_hazard_edges
-        },
-        "optimization_stats": stats
-    }
+    return result

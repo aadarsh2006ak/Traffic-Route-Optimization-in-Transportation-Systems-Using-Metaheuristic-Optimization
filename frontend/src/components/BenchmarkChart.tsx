@@ -12,14 +12,16 @@ import {
   Legend,
 } from 'recharts';
 import { useAppStore } from '../store/appStore';
-import { Award, Zap, Clock, ShieldCheck } from 'lucide-react';
+import { Award, Zap, Clock, ShieldCheck, Activity, BarChart3 } from 'lucide-react';
 
 export const BenchmarkChart: React.FC = () => {
   const { benchmarkResults } = useAppStore();
 
   if (!benchmarkResults) return null;
 
-  const { summary, convergence, runtimes } = benchmarkResults;
+  const summary = benchmarkResults.summary || benchmarkResults.summary_table || [];
+  const convergence = benchmarkResults.convergence || {};
+  const runtimes = benchmarkResults.runtimes || {};
 
   // Prepare convergence multi-line chart data
   const normalizedKeys = Object.keys(convergence || {});
@@ -34,85 +36,63 @@ export const BenchmarkChart: React.FC = () => {
     convergenceData.push(item);
   }
 
-  const colors = ['#00f3ff', '#ff9100', '#bc13fe', '#00e676', '#ff2b2b', '#eab308'];
+  // Runtime comparison bar chart data
+  const runtimeData = Object.keys(runtimes).map((algo) => ({
+    name: algo,
+    runtime: Number(runtimes[algo]).toFixed(3),
+  }));
+
+  const colors: Record<string, string> = {
+    QPSO: '#10b981',
+    'Classical PSO': '#f59e0b',
+    'Genetic Algorithm': '#a855f7',
+    'Ant Colony': '#06b6d4',
+    'Simulated Annealing': '#ec4899',
+    'Exact Solver': '#6366f1',
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Summary Table */}
-      <div className="glass-panel p-4 rounded-xl space-y-3">
-        <h3 className="font-orbitron font-semibold text-sm text-cyan-400 flex items-center gap-2">
-          <Award className="w-4 h-4 text-cyan-400" /> Benchmark Results Summary
-        </h3>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse font-sans">
-            <thead>
-              <tr className="border-b border-gray-800 text-gray-400 font-mono text-[11px] uppercase">
-                <th className="p-2.5">Algorithm</th>
-                <th className="p-2.5">Distance (km)</th>
-                <th className="p-2.5">Duration (min)</th>
-                <th className="p-2.5">Runtime (s)</th>
-                <th className="p-2.5">Iterations</th>
-                <th className="p-2.5">Gap (%)</th>
-                <th className="p-2.5">Feasibility</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className={`border-b border-gray-800/60 hover:bg-cyan-500/10 transition-colors ${
-                    row['Gap from Best (%)'].includes('Best') ? 'bg-cyan-950/20 font-semibold text-cyan-300' : 'text-gray-200'
-                  }`}
-                >
-                  <td className="p-2.5 font-orbitron">{row.Algorithm}</td>
-                  <td className="p-2.5">{row['Distance (km)']} km</td>
-                  <td className="p-2.5">{row['Duration (min)']} m</td>
-                  <td className="p-2.5 font-mono">{row['Runtime (s)']}s</td>
-                  <td className="p-2.5 font-mono">{row.Iterations}</td>
-                  <td className="p-2.5">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono ${
-                        row['Gap from Best (%)'].includes('Best')
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-red-500/20 text-red-300'
-                      }`}
-                    >
-                      {row['Gap from Best (%)']}
-                    </span>
-                  </td>
-                  <td className="p-2.5 text-gray-300">{row.Feasible}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 2. Charts Grid */}
+    <div className="space-y-4">
+      {/* 2 Charts Grid: Convergence + Compute Runtime */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Convergence Multi-Line Chart */}
-        <div className="glass-panel p-4 rounded-xl space-y-2">
-          <h4 className="font-orbitron text-xs text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-cyan-400" /> Multi-Algorithm Convergence
-          </h4>
-          <div className="w-full h-56">
+        <div className="glass-surface p-4 sm:p-5 rounded-2xl space-y-2.5 border border-white/[0.08]">
+          <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+            <h4 className="font-syne text-xs font-bold text-white flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-emerald-400" /> Multi-Solver Cost Convergence
+            </h4>
+            <span className="text-[10px] font-mono text-slate-400">Lower is better</span>
+          </div>
+          <div className="w-full h-60">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={convergenceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="progress" stroke="#6b7280" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 10 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0b1021', borderColor: '#00f3ff', borderRadius: '8px', fontSize: '11px' }}
+              <LineChart data={convergenceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="progress"
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
                 />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
-                {normalizedKeys.map((algo, i) => (
+                <YAxis
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#090d16',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontFamily: 'JetBrains Mono',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'Syne', paddingTop: '8px' }} />
+                {normalizedKeys.map((key) => (
                   <Line
-                    key={algo}
+                    key={key}
                     type="monotone"
-                    dataKey={algo}
-                    stroke={colors[i % colors.length]}
-                    strokeWidth={2}
+                    dataKey={key}
+                    stroke={colors[key] || '#38bdf8'}
+                    strokeWidth={key === 'QPSO' ? 2.8 : 1.6}
                     dot={false}
                   />
                 ))}
@@ -121,21 +101,37 @@ export const BenchmarkChart: React.FC = () => {
           </div>
         </div>
 
-        {/* Runtime Comparison Bar Chart */}
-        <div className="glass-panel p-4 rounded-xl space-y-2">
-          <h4 className="font-orbitron text-xs text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-orange-400" /> Runtime Comparison (Seconds)
-          </h4>
-          <div className="w-full h-56">
+        {/* Solver Execution Runtime Bar Chart */}
+        <div className="glass-surface p-4 sm:p-5 rounded-2xl space-y-2.5 border border-white/[0.08]">
+          <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+            <h4 className="font-syne text-xs font-bold text-white flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-indigo-400" /> Compute Execution Runtime (Seconds)
+            </h4>
+            <span className="text-[10px] font-mono text-slate-400">Computational overhead</span>
+          </div>
+          <div className="w-full h-60">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={runtimes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="Algorithm" stroke="#6b7280" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 10 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0b1021', borderColor: '#ff9100', borderRadius: '8px', fontSize: '11px' }}
+              <BarChart data={runtimeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 9, fontFamily: 'Syne' }}
                 />
-                <Bar dataKey="Runtime (s)" fill="#ff9100" radius={[4, 4, 0, 0]} />
+                <YAxis
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#090d16',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontFamily: 'JetBrains Mono',
+                  }}
+                />
+                <Bar dataKey="runtime" fill="#6366f1" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -144,3 +140,5 @@ export const BenchmarkChart: React.FC = () => {
     </div>
   );
 };
+
+export default BenchmarkChart;

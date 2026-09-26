@@ -1,108 +1,84 @@
 # backend/app/api/routes_benchmark.py
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Tuple
-from ..benchmarking.runner import benchmark_runner
+from fastapi import APIRouter, HTTPException, Response
+from typing import List, Optional
+from ..models.schemas import BenchmarkRunRequest
+from ..services.benchmark_service import benchmark_service
+from ..services.db_service import db_service
 from ..benchmarking.scenario_runner import scenario_benchmark_manager
-from ..services.google_route_service import google_route_service
+from ..utils.validators import validate_nodes_list
 
-router = APIRouter(prefix="/api/v1/benchmark", tags=["Benchmarking"])
+router = APIRouter(tags=["Benchmarking Suite"])
 
-class LocationNode(BaseModel):
-    name: str
-    coords: Tuple[float, float]
-    demand: Optional[float] = 1.0
-    window: Optional[Tuple[float, float]] = None
-
-class BenchmarkRequest(BaseModel):
-    start_location: LocationNode
-    stops: List[LocationNode]
-    algorithms: Optional[List[str]] = ["QPSO", "Simulated Annealing", "Genetic Algorithm", "Ant Colony", "Classical PSO"]
-    fleet_size: Optional[int] = Field(default=1, ge=1, le=10)
-    vehicle_capacity: Optional[int] = Field(default=0, ge=0)
-    traffic_enabled: Optional[bool] = True
-    traffic_hour: Optional[float] = 9.0
-    round_trip: Optional[bool] = False
-    custom_params: Optional[Dict[str, Any]] = None
-
-class ScenarioRunRequest(BaseModel):
-    scenario: Optional[str] = "peak_hour"
-    node_limit: Optional[int] = Field(default=40, ge=5, le=500)
-    fleet_size: Optional[int] = Field(default=4, ge=1, le=15)
-
-@router.post("")
-@router.post("/")
-def run_benchmark_suite(request: BenchmarkRequest):
+@router.post("/api/benchmark/run")
+@router.post("/api/v1/benchmark")
+@router.post("/api/v1/benchmark/")
+def execute_benchmark_suite(request: BenchmarkRunRequest):
     """
-    Executes a multi-algorithm benchmark comparing QPSO against classical metaheuristics.
+    Executes a comprehensive benchmark comparing QPSO vs Classical PSO vs GA vs ACO vs Exact Methods.
+    Returns convergence curves, total cost, travel times, runtime, and statistical stability.
     """
-    if not request.stops:
-        raise HTTPException(status_code=400, detail="Stops list cannot be empty.")
-
     start_dict = request.start_location.model_dump()
     stops_dict = [s.model_dump() for s in request.stops]
 
-    results = benchmark_runner.run_benchmark(
+    validate_nodes_list(start_dict, stops_dict)
+
+    results = benchmark_service.run_benchmark_suite(
         start_node=start_dict,
         stops_data=stops_dict,
-        algorithms_to_run=request.algorithms,
-        fleet_size=request.fleet_size,
-        vehicle_capacity=request.vehicle_capacity,
-        traffic_hour=request.traffic_hour,
-        traffic_enabled=request.traffic_enabled,
-        round_trip=request.round_trip,
-        custom_params=request.custom_params
+        algorithms_to_run=request.algorithms or ["QPSO", "Classical PSO", "Genetic Algorithm", "Ant Colony", "Exact Solver"],
+        fleet_size=request.num_vehicles or 1,
+        vehicle_capacity=request.vehicle_capacity or 0,
+        traffic_hour=request.traffic_hour or 9.0,
+        traffic_enabled=request.traffic_enabled if request.traffic_enabled is not None else True,
+        trials_per_algo=request.trials_per_algo or 1,
+        custom_params=request.custom_params,
+        graph_id=request.graph_id
     )
 
-    return {
-        "status": "success",
-        "summary": results["summary_table"].to_dict(orient="records"),
-        "convergence": results["convergence_df"].to_dict(orient="list"),
-        "runtimes": results["runtime_df"].reset_index().to_dict(orient="records")
-    }
+    return results
 
-@router.get("/scenarios")
+@router.get("/api/benchmark/{run_id}")
+@router.get("/api/v1/benchmark/{run_id}")
+def get_benchmark_run_by_id(run_id: str):
+    """
+    Fetches the final comparison table and convergence traces for a past benchmark run.
+    """
+    data = db_service.get_benchmark_run(run_id)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"Benchmark run with ID '{run_id}' not found.")
+    return {"status": "success", "benchmark": data}
+
+@router.get("/api/benchmark/history")
+@router.get("/api/v1/benchmark/history")
+def get_benchmark_history():
+    """
+    Lists past benchmark runs with summary statistics.
+    """
+    history = db_service.get_recent_benchmark_history(limit=25)
+    return {"status": "success", "history": history}
+
+@router.get("/api/benchmark/export/{run_id}")
+def export_benchmark_csv(run_id: str):
+    """
+    Downloads benchmark comparison results as a CSV file.
+    """
+    data = db_service.get_benchmark_run(run_id)
+    if not data or "results" not in data:
+        raise HTTPException(status_code=404, detail=f"Benchmark run '{run_id}' not found.")
+    
+    csv_str = benchmark_service.generate_csv_report(data["results"])
+    return Response(
+        content=csv_str,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=benchmark_{run_id}.csv"}
+    )
+
+@router.get("/api/v1/benchmark/scenarios")
 def get_large_scale_scenarios():
     """
-    Returns 500-node large-scale benchmark results across 3 traffic scenarios:
-    1. Off-peak (theta = 1.0)
-    2. Peak-hour (theta = 1.8)
-    3. Disrupted network with CV hazard closures (theta = 2.5)
+    500-Node national benchmark matrix across off-peak, peak-hour, and hazard scenarios.
     """
     return {
         "status": "success",
         "scenarios": scenario_benchmark_manager.get_benchmark_matrix_report()
-    }
-
-@router.post("/scenarios/run")
-def run_live_scenario(request: ScenarioRunRequest):
-    """
-    Executes a live benchmark on the 500-node national dataset sample.
-    """
-    return scenario_benchmark_manager.execute_live_scenario_benchmark(
-        scenario_key=request.scenario or "peak_hour",
-        node_limit=request.node_limit or 40,
-        fleet_size=request.fleet_size or 4
-    )
-
-@router.post("/google-baseline")
-def run_google_baseline(request: BenchmarkRequest):
-    """
-    Runs Google Route Optimization API commercial baseline solver.
-    """
-    start_dict = request.start_location.model_dump()
-    stops_dict = [s.model_dump() for s in request.stops]
-    
-    routes, stats = google_route_service.optimize_with_google(
-        start_node=start_dict,
-        stops_data=stops_dict,
-        n_vehicles=request.fleet_size or 1,
-        vehicle_capacity=request.vehicle_capacity or 0,
-        traffic_hour=request.traffic_hour or 9.0
-    )
-    return {
-        "status": "success",
-        "provider": "Google Route Optimization Baseline",
-        "stats": stats,
-        "routes": routes
     }

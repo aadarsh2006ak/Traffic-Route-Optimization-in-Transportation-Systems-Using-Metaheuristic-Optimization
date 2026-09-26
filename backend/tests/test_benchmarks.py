@@ -13,11 +13,11 @@ def test_benchmark_suite_execution():
     results = benchmark_runner.run_benchmark(
         start_node=start_node,
         stops_data=stops,
-        algorithms_to_run=["QPSO", "Simulated Annealing"],
+        algorithms_to_run=["QPSO", "Classical PSO"],
         fleet_size=1,
         custom_params={
             "QPSO": {"swarm_size": 15, "max_iter": 40},
-            "Simulated Annealing": {"iter": 100}
+            "Classical PSO": {"swarm_size": 15, "max_iter": 40}
         }
     )
 

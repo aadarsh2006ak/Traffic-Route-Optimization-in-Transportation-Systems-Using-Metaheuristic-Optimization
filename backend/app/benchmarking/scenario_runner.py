@@ -4,10 +4,14 @@ import time
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Any, Optional
-from ..algorithms import ALGORITHM_REGISTRY
+# pyrefly: ignore [missing-import]
+from ..optimizers import ALGORITHM_REGISTRY
+# pyrefly: ignore [missing-import]
 from ..services.google_route_service import google_route_service
+# pyrefly: ignore [missing-import]
 from ..services.db_service import db_service
-from ..core.traffic_sim import traffic_sim
+# pyrefly: ignore [missing-import]
+from ..graph.traffic_simulator import traffic_simulator as traffic_sim
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "demo_graphs"))
 
@@ -277,6 +281,7 @@ class ScenarioBenchmarkManager:
 
         traffic_hour = 8.5 if scenario_key == "peak_hour" else (14.0 if scenario_key == "off_peak" else 18.5)
         
+        # pyrefly: ignore [missing-import]
         from ..benchmarking.runner import benchmark_runner
         results = benchmark_runner.run_benchmark(
             start_node=start_node,

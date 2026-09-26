@@ -66,8 +66,13 @@ frontend/dist/
 COLLEGE_PRESENTATION_NOTES.txt
 *PRESENTATION*.txt
 
-# Allow demo datasets and results
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+quantumroute.db
 
+# Allow demo datasets and results
 !demo_stops.csv
 !demo_stops_40.csv
 !data/

@@ -34,7 +34,9 @@ export interface BenchmarkRequest {
   custom_params?: Record<string, any>;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1';
+const rawBase = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const cleanBase = rawBase.replace(/\/+$/, '');
+const API_BASE = cleanBase.endsWith('/api/v1') ? cleanBase : `${cleanBase}/api/v1`;
 
 const apiClient = axios.create({
   baseURL: API_BASE,

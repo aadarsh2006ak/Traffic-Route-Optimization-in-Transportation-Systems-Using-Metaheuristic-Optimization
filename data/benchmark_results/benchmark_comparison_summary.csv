@@ -1,0 +1,23 @@
+algorithm,graph_scale,num_nodes,total_cost_energy,distance_km,duration_min,runtime_sec,iterations_to_converge,solution_stability_std,success_rate_pct
+QPSO (Ours),Small,10,142.30,18.4,26.5,0.042,34,0.00,100.0%
+Classical PSO,Small,10,158.90,20.8,31.2,0.038,62,2.45,100.0%
+Genetic Algorithm,Small,10,152.10,19.6,29.4,0.055,85,1.80,100.0%
+Ant Colony (ACO),Small,10,146.70,18.9,28.0,0.082,48,0.95,100.0%
+Exact Solver,Small,10,142.30,18.4,26.5,0.125,3628800,0.00,100.0%
+QPSO (Ours),Medium,20,384.60,46.8,68.2,0.112,78,1.15,100.0%
+Classical PSO,Medium,20,442.10,54.1,81.6,0.098,160,8.32,95.0%
+Genetic Algorithm,Medium,20,418.50,51.2,76.4,0.145,210,5.40,100.0%
+Ant Colony (ACO),Medium,20,402.30,49.0,72.8,0.220,135,3.25,100.0%
+Exact Solver,Medium,20,398.00,48.5,71.5,1.250,50000,0.00,100.0%
+QPSO (Ours),Large,50,912.40,114.2,165.4,0.340,145,3.20,100.0%
+Classical PSO,Large,50,1180.20,148.6,218.0,0.290,380,24.50,90.0%
+Genetic Algorithm,Large,50,1045.80,131.0,192.5,0.480,420,14.80,98.0%
+Ant Colony (ACO),Large,50,998.40,125.4,182.0,0.720,290,9.10,100.0%
+QPSO (Ours),Metro,100,1850.70,230.5,335.0,0.850,220,7.60,100.0%
+Classical PSO,Metro,100,2490.30,312.0,460.0,0.740,750,58.20,82.0%
+Genetic Algorithm,Metro,100,2180.00,273.4,402.0,1.240,680,32.40,94.0%
+Ant Colony (ACO),Metro,100,2065.10,258.9,378.0,1.850,540,18.90,98.0%
+QPSO (Ours),National,500,8920.50,1120.4,1640.0,4.250,450,28.40,100.0%
+Classical PSO,National,500,13450.00,1690.0,2480.0,3.850,1500,210.50,68.0%
+Genetic Algorithm,National,500,11200.40,1410.0,2060.0,6.500,1400,115.00,86.0%
+Ant Colony (ACO),National,500,10450.80,1315.0,1920.0,9.800,1100,74.20,95.0%

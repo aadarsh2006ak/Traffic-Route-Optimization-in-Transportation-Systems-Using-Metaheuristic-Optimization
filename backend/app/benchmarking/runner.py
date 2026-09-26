@@ -2,7 +2,7 @@
 from typing import List, Dict, Any, Optional
 import time
 import pandas as pd
-from ..algorithms import ALGORITHM_REGISTRY
+from ..optimizers import ALGORITHM_REGISTRY
 from ..services.osrm_service import osrm_service
 from ..core.constraints import constraint_handler
 from .metrics import calculate_benchmark_metrics

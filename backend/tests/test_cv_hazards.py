@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from backend.app.services.cv_hazard_service import cv_hazard_service
 from backend.app.services.osrm_service import osrm_service
-from backend.app.algorithms.qpso import qpso_solver
+from backend.app.optimizers.qpso import qpso_solver
 
 def test_cv_hazard_detection_inference():
     """Test CV Neural Network simulation from camera metadata."""

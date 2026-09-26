@@ -1,219 +1,244 @@
 import React, { useState } from 'react';
 import { useAppStore } from './store/appStore';
 import { Sidebar } from './components/Sidebar';
-import { RouteOptimizer } from './pages/RouteOptimizer';
+import { Dashboard } from './pages/Dashboard';
+import { ResultsPage } from './pages/ResultsPage';
 import { BenchmarkLab } from './pages/BenchmarkLab';
 import { NetworkGraph } from './pages/NetworkGraph';
 import { VisionRadar } from './pages/VisionRadar';
 import { RunHistory } from './pages/RunHistory';
 import { GuideModal } from './components/GuideModal';
 import {
-  Map,
+  Compass,
+  BarChart3,
   Award,
   Network,
-  Cpu,
-  SlidersHorizontal,
   Radio,
-  ShieldAlert,
-  Zap,
   Database,
   HelpCircle,
-  Sparkles,
+  SlidersHorizontal,
+  ShieldAlert,
+  AlertTriangle,
+  Zap,
+  Menu,
+  X,
+  Maximize2
 } from 'lucide-react';
 import { useOptimize } from './hooks/useOptimize';
 
 export const App: React.FC = () => {
-  const { activeTab, setActiveTab, algorithm, stops, activeHazards, hazardsEnabled } = useAppStore();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const {
+    activeTab,
+    setActiveTab,
+    startLocation,
+    stops,
+    activeHazards,
+    isOptimizing
+  } = useAppStore();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { runOptimization } = useOptimize();
 
   const hasBlockedHazard = activeHazards.some((h) => h.is_blocked || h.severity >= 0.85);
 
+  const navTabs = [
+    { id: 'optimizer', label: 'COCKPIT', icon: Compass },
+    { id: 'results', label: 'DISPATCH', icon: BarChart3 },
+    { id: 'benchmark', label: 'BENCHMARK', icon: Award },
+    { id: 'graph', label: 'NETWORK θ(t)', icon: Network },
+    { id: 'vision', label: 'VISION RADAR', icon: Radio, badge: activeHazards.length > 0 ? `${activeHazards.length}` : null },
+    { id: 'history', label: 'LOGS', icon: Database },
+  ];
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050711] text-gray-100 font-sans">
-      {/* 1. Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-80 xl:w-96 h-screen flex-shrink-0">
-        <Sidebar />
-      </div>
-
-      {/* 2. Mobile/Tablet Off-Canvas Sidebar Drawer */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Dark Backdrop */}
+    <div className="flex h-screen w-screen overflow-hidden bg-[#03060f] text-[#cbd5e1] font-mono select-none relative">
+      {/* 1. Off-Canvas Sidebar Drawer for Waypoint & Stop Configuration */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex animate-in fade-in duration-150">
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setIsSidebarOpen(false)}
           />
-
-          {/* Drawer Content */}
-          <div className="relative z-10 w-[88vw] max-w-sm sm:max-w-md h-full bg-[#070a18] shadow-2xl animate-in slide-in-from-left duration-300">
-            <Sidebar onClose={() => setIsMobileSidebarOpen(false)} />
+          <div className="relative z-10 w-96 max-w-full h-full bg-[#060a16] border-r border-[#1a2f52] shadow-2xl animate-in slide-in-from-left duration-200">
+            <Sidebar onClose={() => setIsSidebarOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* 3. Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 md:p-6 space-y-3 sm:space-y-4 relative">
-        {/* Top App Header & Navigation Bar */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-gray-800/80">
-          <div className="flex items-center justify-between gap-2">
-            {/* Mobile Sidebar Toggle Button */}
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-orbitron font-semibold shadow-sm hover:bg-cyan-500/30 transition-all flex-shrink-0"
-              title="Open Stops & Settings"
+      {/* 2. Main Full-Screen Application Viewport */}
+      <div className="flex-1 flex flex-col h-full w-full overflow-hidden relative">
+        {/* Global Unified Navigation Bar */}
+        <header className="flex items-center justify-between px-3 py-1.5 bg-[#060a16] border-b border-[#0d182b] flex-shrink-0 text-xs">
+          <div className="flex items-center gap-2.5">
+            {/* Logo */}
+            <div
+              className="flex items-center gap-1 font-bold tracking-wider text-xs cursor-pointer"
+              onClick={() => setActiveTab('optimizer')}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Stops & Config</span>
+              <span className="text-[#00ff9d]">SMART</span>
+              <span className="text-[#00f0ff]">RUTE-Q</span>
+            </div>
+
+            <span className="text-[#1a2f52]">|</span>
+
+            {/* Waypoint & Origin Manager Trigger */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-2 px-2.5 py-1 bg-[#0d1e3d] hover:bg-[#142d5c] border border-[#00f0ff]/50 text-white text-xs font-bold transition-all shadow-hud-cyan group"
+              title="Configure Starting Origin & Delivery Destinations"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#00f0ff] group-hover:rotate-90 transition-transform" />
+              <span className="text-[#00f0ff]">LOCATIONS</span>
+              <span className="px-1.5 py-0.2 bg-[#00ff9d] text-[#040711] text-[10px] font-bold">
+                {stops.length} STOPS
+              </span>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">
+                {startLocation ? `(🟢 ${startLocation.name.slice(0, 15)}...)` : '(No Origin Set)'}
+              </span>
             </button>
-
-            {/* Navigation Tab Buttons */}
-            <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
-              <button
-                onClick={() => setActiveTab('optimizer')}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'optimizer'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-neon-cyan'
-                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
-                }`}
-              >
-                <Map className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Optimizer</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('vision')}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap relative ${
-                  activeTab === 'vision'
-                    ? 'bg-red-500/20 text-red-300 border border-red-400 shadow-neon-red'
-                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
-                }`}
-              >
-                <Radio className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeHazards.length > 0 ? 'text-red-400 animate-pulse' : ''}`} />
-                <span>Vision Radar</span>
-                {activeHazards.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[9px] font-mono font-bold">
-                    {activeHazards.length}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab('benchmark')}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'benchmark'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-400 shadow-neon-purple'
-                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>500-Node Benchmarks</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('graph')}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'graph'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400'
-                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
-                }`}
-              >
-                <Network className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Graph & Traffic θ(t)</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-orbitron font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'history'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-400'
-                    : 'bg-gray-900/60 text-gray-400 hover:text-gray-200 border border-transparent'
-                }`}
-              >
-                <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Run History</span>
-              </button>
-            </nav>
           </div>
 
-          {/* Top Status HUD & User Guide Modal Button */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            {navTabs.map((tab) => {
+              const isActive = activeTab === tab.id || (tab.id === 'optimizer' && (activeTab as string) === 'dashboard');
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono transition-all ${
+                    isActive
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/50 font-bold'
+                      : 'text-[#526685] hover:text-[#cbd5e1] border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" />
+                  <span className="hidden md:inline">{tab.label}</span>
+                  {tab.badge && (
+                    <span className="px-1 bg-[#ff3b30] text-white text-[9px]">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsGuideOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-900/50 to-cyan-900/50 hover:from-purple-800/60 hover:to-cyan-800/60 border border-cyan-400/40 rounded-full text-[11px] font-orbitron text-cyan-200 shadow-md transition-all"
+              onClick={() => runOptimization()}
+              disabled={isOptimizing}
+              className="flex items-center gap-1.5 px-3 py-1 bg-[#00f0ff] hover:bg-[#00f0ff]/80 text-[#040711] font-bold text-xs shadow-hud-cyan transition-all disabled:opacity-50"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Guide & Docs</span>
+              <Zap className="w-3 h-3 fill-current" />
+              <span>{isOptimizing ? 'SOLVING...' : 'RUN SOLVER'}</span>
             </button>
 
-            {hazardsEnabled && activeHazards.length > 0 && (
-              <div
-                onClick={() => setActiveTab('vision')}
-                className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 bg-red-950/60 border border-red-500/40 rounded-full text-[10px] sm:text-xs font-mono text-red-300 animate-pulse hover:bg-red-900/60 transition-colors"
-                title="Click to open Vision Radar"
-              >
-                <ShieldAlert className="w-3 h-3 text-red-400" />
-                <span>{activeHazards.length} Incidents</span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-[#0a0f1d] border border-cyan-500/30 rounded-full text-[10px] sm:text-xs font-mono text-cyan-400">
-              <Cpu className="w-3 h-3 text-cyan-400" />
-              <span className="truncate max-w-[120px]">{algorithm}</span>
-            </div>
+            <button
+              onClick={() => setIsGuideOpen(true)}
+              className="px-2 py-1 text-xs text-[#526685] hover:text-white border border-[#1a2f52] transition-all"
+            >
+              DOCS
+            </button>
           </div>
         </header>
 
-        {/* Global Critical Incident Warning Banner */}
+        {/* Global Road Hazard Warning Banner */}
         {hasBlockedHazard && activeTab !== 'vision' && (
-          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-red-950/80 via-red-900/40 to-[#0a0f1d] border border-red-500/50 shadow-lg text-xs animate-in fade-in duration-300">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-red-400 animate-bounce flex-shrink-0" />
-              <div>
-                <span className="font-bold text-red-300 font-orbitron">
-                  CRITICAL ROAD BLOCKAGE DETECTED:
-                </span>{' '}
-                <span className="text-gray-300">
-                  CCTV vision model detected severe blockage on transport corridor.
-                </span>
-              </div>
+          <div className="p-2 bg-[#ff3b30]/15 border-b border-[#ff3b30]/40 flex items-center justify-between text-xs px-4 flex-shrink-0 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 text-[#ff3b30]">
+              <AlertTriangle className="w-4 h-4 animate-bounce flex-shrink-0" />
+              <span className="font-bold">CRITICAL ROAD BLOCKAGE DETECTED:</span>
+              <span className="text-slate-300">YOLOv8 vision model reported high severe corridor penalty.</span>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('vision')}
-                className="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-orbitron text-[11px] border border-gray-700 transition-all"
+                className="px-2 py-0.5 bg-[#060a16] hover:bg-[#0d182b] text-slate-200 border border-[#1a2f52] text-[11px]"
               >
                 Inspect
               </button>
               <button
                 onClick={() => runOptimization()}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-orbitron text-[11px] font-bold shadow-lg transition-all"
+                disabled={isOptimizing}
+                className="px-2.5 py-0.5 bg-[#ff3b30] hover:bg-[#ff3b30]/80 text-white font-bold text-[11px] flex items-center gap-1 shadow-lg"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                <Zap className="w-3 h-3 text-[#ffb700]" />
                 <span>Re-Route Fleet</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Dynamic Page Views */}
-        <div className="flex-1 pb-16 sm:pb-6 min-h-0">
-          {activeTab === 'optimizer' && <RouteOptimizer />}
-          {activeTab === 'vision' && <VisionRadar />}
-          {activeTab === 'benchmark' && <BenchmarkLab />}
-          {activeTab === 'graph' && <NetworkGraph />}
-          {activeTab === 'history' && <RunHistory />}
+        {/* Dynamic Main Page Content View */}
+        <div className="flex-1 w-full h-full overflow-hidden relative">
+          {(activeTab === 'optimizer' || activeTab === 'dashboard') && <Dashboard />}
+          {activeTab === 'results' && (
+            <div className="h-full overflow-y-auto p-4">
+              <ResultsPage />
+            </div>
+          )}
+          {activeTab === 'vision' && (
+            <div className="h-full overflow-y-auto p-4">
+              <VisionRadar />
+            </div>
+          )}
+          {activeTab === 'benchmark' && (
+            <div className="h-full overflow-y-auto p-4">
+              <BenchmarkLab />
+            </div>
+          )}
+          {activeTab === 'graph' && (
+            <div className="h-full overflow-y-auto p-4">
+              <NetworkGraph />
+            </div>
+          )}
+          {activeTab === 'history' && (
+            <div className="h-full overflow-y-auto p-4">
+              <RunHistory />
+            </div>
+          )}
         </div>
 
-        {/* Mobile Floating Action Button to configure stops & params */}
-        <button
-          onClick={() => setIsMobileSidebarOpen(true)}
-          className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-600 text-black font-orbitron font-bold text-xs shadow-xl shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all"
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span>Fleet & Stops ({stops.length})</span>
-        </button>
+        {/* Floating Quick Action Trigger for Waypoints on Cockpit View */}
+        {(activeTab === 'optimizer' || activeTab === 'dashboard') && (
+          <div className="fixed bottom-2 left-2 z-40 flex items-center gap-2">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 bg-[#060a16]/90 hover:bg-[#0d1e3d] border border-[#00f0ff]/40 text-[#00f0ff] text-xs font-bold transition-all shadow-hud-cyan"
+              title="Open Waypoints & Stop Manager"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>EDIT STOPS ({stops.length})</span>
+            </button>
 
-        {/* Interactive Guide & Documentation Modal */}
+            {/* Quick Tab Switcher Dock */}
+            <div className="flex items-center bg-[#060a16]/90 border border-[#0d182b] p-0.5 text-[10px]">
+              {navTabs.map((tab) => {
+                const isActive = activeTab === tab.id || (tab.id === 'optimizer' && activeTab === 'dashboard');
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`px-2 py-0.5 transition-all ${
+                      isActive
+                        ? 'bg-[#00f0ff]/20 text-[#00f0ff] font-bold'
+                        : 'text-[#526685] hover:text-[#cbd5e1]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* System Documentation & SIH Guide Modal */}
         <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      </main>
+      </div>
     </div>
   );
 };

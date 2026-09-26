@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 Database Service
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: quantumroute_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: quantumroute
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Optimization Engine
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quantumroute_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=postgres_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_DB=quantumroute
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres_db:5432/quantumroute
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+
+  # React + Vite Frontend Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quantumroute_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
